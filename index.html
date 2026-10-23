@@ -139,41 +139,31 @@
     // 배포한 Google Apps Script Web App URL
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbymCsgNLRzDDp7g6HEaFdGncxGPGs0XiHOuvfbcNM2rS7J5Rbkk8jNy8GOLRE62ccPF4A/exec"; 
 
-    // Mock 데이터: podcast_url에 파일 경로 또는 외부 스트리밍 URL을 기입합니다.
-    let sermonList = [
-      {
-        id: "2026-10-W3-SUN",
-        year_week: "2026-42",
-        type: "주일설교",
-        date: "2026-10-18",
-        title: "말씀 위에 굳게 서는 공동체",
-        preacher: "한성찬 담임목사",
-        bible_ref: "마태복음 7:24~27",
-        podcast_url: "./audio/2026-10-W3-SUN.m4a", // 상대경로 또는 외부 직링 URL
-        summary_core: "반석 위에 집을 짓는 지혜로운 자와 모래 위에 짓는 어리석은 자의 차이. 말씀을 듣고 행함으로 신앙의 기초를 다져야 합니다.",
-        content_markdown: "## 1. 반석 위에 지은 집\n말씀을 듣고 행하는 자는 그 주추를 반석 위에 놓은 지혜로운 사람과 같습니다.\n\n## 2. 비와 창수\n환난과 시험의 바람이 불 때 진정한 믿음의 기초가 드러납니다.\n\n* 순종하는 삶이 곧 견고한 터전입니다.",
-        exegesis_markdown: "• **페트라(πέτρα)**: 흔들리지 않는 거대한 바위 또는 그리스도 자신을 상징합니다.\n• **아쿠온(ἀκούων)과 포이온(ποιῶν)**: 말씀을 듣는(Hear) 단계에 머무르지 않고 능동적으로 행하는(Do) 연속적인 상태를 의미합니다.",
-        reflection_points: "1. 내 삶의 기초는 하나님의 말씀 위에 세워져 있는가?\n2. 알고 있는 말씀 중 오늘 즉시 실천해야 할 순종은 무엇인가?"
-      },
-      {
-        id: "2026-10-W3-WED",
-        year_week: "2026-42",
-        type: "수요예배",
-        date: "2026-10-14",
-        title: "한눈에 이해하는 마태복음 팔복(八福) 총정리",
-        preacher: "한성찬 담임목사",
-        bible_ref: "마태복음 5:1~12",
-        podcast_url: "./audio/2026-10-W3-WED.m4a",
-        summary_core: "성경이 말하는 참된 복(샬롬)과 산상수훈의 유대적 배경, 팔복의 수미쌍관 구조와 천국 통치 원리 총정리.",
-        content_markdown: "## 1. 서론: 성경이 말하는 진짜 복\n참된 복은 기복이 아닌 만물의 주인이신 하나님과의 올바른 관계 안에서 누리는 하늘의 평강(샬롬)입니다.\n\n## 2. 제1복 ~ 제4복: 영적 갈망과 통치\n심령의 가난함에서 시작하여 의에 주리고 목마른 자가 되는 영적 성장의 순서를 다룹니다.",
-        exegesis_markdown: "• **아쉬레이(אַשְׁרֵי)**: 시편 1편의 '복 있는 사람은'과 동일한 단어로, '바른길로 똑바로 걷는 자의 행복'을 뜻합니다.\n• **말쿠트 하샤마임(מַלְכוּת הַשָּׁמַיִם)**: 죽어서 가는 내세뿐 아니라 지금 예수님의 통치를 받는 현재적 하나님 나라를 가리킵니다.",
-        reflection_points: "1. 나는 내 영적 파산을 인정하고 주님의 은혜를 매일 갈망하는가?\n2. 주님의 의(義)로 채워지는 참된 만족을 누리고 있는가?"
-      }
-    ];
-
+    let sermonList = [];
     let currentFilterType = "주일설교";
     let currentIndex = 0;
     let filteredList = [];
+
+    // 구글 드라이브 URL을 오디오 재생 가능한 직접 다운로드 스트리밍 URL로 자동 변환하는 함수
+    function formatAudioUrl(url) {
+      if (!url) return "";
+      url = url.trim();
+
+      // 형식 1: https://drive.google.com/file/d/FILE_ID/...
+      const matchFileD = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (matchFileD && matchFileD[1]) {
+        return `https://drive.google.com/uc?export=download&id=${matchFileD[1]}`;
+      }
+
+      // 형식 2: https://drive.google.com/open?id=FILE_ID 또는 uc?id=FILE_ID
+      const matchParamId = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (matchParamId && matchParamId[1]) {
+        return `https://drive.google.com/uc?export=download&id=${matchParamId[1]}`;
+      }
+
+      // 일반 링크(mp3, m4a 직링 또는 상대경로)는 그대로 반환
+      return url;
+    }
 
     async function initData() {
       if (APPS_SCRIPT_URL) {
@@ -226,18 +216,20 @@
       document.getElementById('preacherText').textContent = item.preacher || "";
       document.getElementById('summaryCore').textContent = item.summary_core || "";
       
-      // 인라인 오디오 플레이어 제어
+      // 인라인 오디오 플레이어 제어 및 자동 변환 주소 적용
       const audioContainer = document.getElementById('podcastContainer');
       const audioPlayer = document.getElementById('audioPlayer');
       const audioSource = document.getElementById('audioSource');
-      const targetAudioUrl = item.podcast_url || item.youtube_url;
+      const rawAudioUrl = item.podcast_url || item.youtube_url;
 
-      if (targetAudioUrl) {
-        audioPlayer.pause(); // 이전 재생 중단
-        audioSource.src = targetAudioUrl;
-        audioPlayer.load(); // 소스 재로드
+      if (rawAudioUrl && !rawAudioUrl.includes("youtu.be") && !rawAudioUrl.includes("youtube.com")) {
+        const streamUrl = formatAudioUrl(rawAudioUrl);
+        audioPlayer.pause();
+        audioSource.src = streamUrl;
+        audioPlayer.load();
         audioContainer.classList.remove('hidden');
       } else {
+        audioPlayer.pause();
         audioContainer.classList.add('hidden');
       }
 
