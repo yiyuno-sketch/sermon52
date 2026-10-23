@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>말씀 묵상 & 설교 아카이브</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Marked.js (Markdown Parser) CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap');
+    body { font-family: 'Pretendard', sans-serif; }
+    .prose h1, .prose h2, .prose h3 { color: #1e293b; font-weight: 700; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+    .prose h1 { font-size: 1.35rem; }
+    .prose h2 { font-size: 1.2rem; }
+    .prose p { margin-bottom: 0.75rem; line-height: 1.7; color: #334155; }
+    .prose ul { list-style-type: disc; margin-left: 1.25rem; margin-bottom: 0.75rem; color: #334155; }
+    .prose li { margin-bottom: 0.35rem; }
+    .prose strong { color: #0f172a; font-weight: 600; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col">
+
+  <!-- 네비게이션 헤더 -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">📖</span>
+        <h1 class="font-bold text-lg text-slate-900 tracking-tight">말씀과 삶 365</h1>
+      </div>
+      <div id="statusBadge" class="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-medium flex items-center gap-1 border border-emerald-200">
+        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+        동기화 완료
+      </div>
+    </div>
+  </header>
+
+  <!-- 컨트롤 바: 주차 선택 및 예배 종류 선택 -->
+  <main class="max-w-4xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+    
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <!-- 주차 네비게이터 -->
+      <div class="flex items-center gap-3">
+        <button id="prevBtn" class="p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition" title="이전 설교">
+          <i data-lucide="chevron-left" class="w-5 h-5"></i>
+        </button>
+        <div class="text-center">
+          <span id="weekLabel" class="text-xs text-indigo-600 font-semibold uppercase tracking-wider block">2026년 42주차</span>
+          <span id="dateLabel" class="text-sm font-bold text-slate-800">2026. 10. 18</span>
+        </div>
+        <button id="nextBtn" class="p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition" title="다음 설교">
+          <i data-lucide="chevron-right" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 주일/수요 세그먼트 버튼 -->
+      <div class="flex bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
+        <button id="btnSunday" onclick="switchType('주일설교')" class="flex-1 sm:flex-none px-5 py-1.5 rounded-lg text-sm font-semibold transition shadow-sm bg-white text-indigo-700">
+          주일설교
+        </button>
+        <button id="btnWednesday" onclick="switchType('수요예배')" class="flex-1 sm:flex-none px-5 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-slate-900">
+          수요예배
+        </button>
+      </div>
+    </div>
+
+    <!-- 설교 요약 헤더 카드 -->
+    <section class="bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-800 text-white rounded-3xl p-6 sm:p-8 shadow-md">
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <span id="cardBadge" class="bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 text-xs px-2.5 py-0.5 rounded-md font-medium">주일설교</span>
+        <span id="bibleRef" class="bg-slate-700/60 text-slate-200 text-xs px-2.5 py-0.5 rounded-md">마태복음 7:24~27</span>
+      </div>
+      <h2 id="sermonTitle" class="text-2xl sm:text-3xl font-bold leading-snug mb-3">말씀 위에 굳게 서는 공동체</h2>
+      <p id="preacherText" class="text-slate-300 text-sm mb-4">한성찬 담임목사</p>
+      
+      <div class="bg-slate-800/80 backdrop-blur rounded-2xl p-4 border border-slate-700/60 mb-4">
+        <p class="text-xs font-semibold text-indigo-300 mb-1">핵심 메시지</p>
+        <p id="summaryCore" class="text-sm text-slate-200 leading-relaxed">
+          반석 위에 집을 짓는 지혜로운 자와 모래 위에 짓는 어리석은 자의 차이. 말씀 위에 삶의 기초를 세워야 환난 가운데 흔들리지 않습니다.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a id="youtubeLink" href="#" target="_blank" class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl transition shadow">
+          <i data-lucide="play-circle" class="w-4 h-4"></i> 유튜브 말씀 듣기
+        </a>
+      </div>
+    </section>
+
+    <!-- 세부 콘텐츠 탭 -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <!-- 탭 버튼 헤더 -->
+      <div class="flex border-b border-slate-200 bg-slate-50/50">
+        <button onclick="setTab('content')" id="tabBtn-content" class="flex-1 py-3.5 px-4 text-center text-sm font-bold border-b-2 border-indigo-600 text-indigo-700 flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="book-open" class="w-4 h-4"></i> 설교 요약 본문
+        </button>
+        <button onclick="setTab('exegesis')" id="tabBtn-exegesis" class="flex-1 py-3.5 px-4 text-center text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="languages" class="w-4 h-4"></i> 원어 및 주해
+        </button>
+        <button onclick="setTab('reflection')" id="tabBtn-reflection" class="flex-1 py-3.5 px-4 text-center text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="heart-handshake" class="w-4 h-4"></i> 삶의 적용 및 묵상
+        </button>
+      </div>
+
+      <!-- 탭 내용 영역 -->
+      <div class="p-6">
+        <!-- 탭 1: 요약 본문 -->
+        <div id="tabContent-content" class="prose max-w-none text-slate-700 leading-relaxed"></div>
+
+        <!-- 탭 2: 원어 및 주해 -->
+        <div id="tabContent-exegesis" class="hidden prose max-w-none text-slate-700 leading-relaxed"></div>
+
+        <!-- 탭 3: 묵상 및 적용 -->
+        <div id="tabContent-reflection" class="hidden">
+          <div id="reflectionList" class="space-y-3"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-400">
+    주일 및 수요일 설교 아카이브 · Powered by Google Sheets
+  </footer>
+
+  <script>
+    // 배포한 Google Apps Script Web App URL을 입력하세요.
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbymCsgNLRzDDp7g6HEaFdGncxGPGs0XiHOuvfbcNM2rS7J5Rbkk8jNy8GOLRE62ccPF4A/exec"; 
+
+    // 기본 Mock 데이터 (Apps Script URL 연결 전 즉시 확인 가능)
+    let sermonList = [
+      {
+        id: "2026-10-W3-SUN",
+        year_week: "2026-42",
+        type: "주일설교",
+        date: "2026-10-18",
+        title: "말씀 위에 굳게 서는 공동체",
+        preacher: "한성찬 담임목사",
+        bible_ref: "마태복음 7:24~27",
+        youtube_url: "https://www.youtube.com",
+        summary_core: "반석 위에 집을 짓는 지혜로운 자와 모래 위에 짓는 어리석은 자의 차이. 말씀을 듣고 행함으로 신앙의 기초를 다져야 합니다.",
+        content_markdown: "## 1. 반석 위에 지은 집\n말씀을 듣고 행하는 자는 그 주추를 반석 위에 놓은 지혜로운 사람과 같습니다.\n\n## 2. 비와 창수\n환난과 시험의 바람이 불 때 진정한 믿음의 기초가 드러납니다.\n\n* 순종하는 삶이 곧 견고한 터전입니다.",
+        exegesis_markdown: "• **페트라(πέτρα)**: 흔들리지 않는 거대한 바위 또는 그리스도 자신을 상징합니다.\n• **아쿠온(ἀκούων)과 포이온(ποιῶν)**: 말씀을 듣는(Hear) 단계에 머무르지 않고 능동적으로 행하는(Do) 연속적인 상태를 의미합니다.",
+        reflection_points: "1. 내 삶의 기초는 하나님의 말씀 위에 세워져 있는가?\n2. 알고 있는 말씀 중 오늘 즉시 실천해야 할 순종은 무엇인가?"
+      },
+      {
+        id: "2026-10-W3-WED",
+        year_week: "2026-42",
+        type: "수요예배",
+        date: "2026-10-14",
+        title: "한눈에 이해하는 마태복음 팔복(八福) 총정리",
+        preacher: "한성찬 담임목사",
+        bible_ref: "마태복음 5:1~12",
+        youtube_url: "https://www.youtube.com",
+        summary_core: "성경이 말하는 참된 복(샬롬)과 산상수훈의 유대적 배경, 팔복의 수미쌍관 구조와 천국 통치 원리 총정리.",
+        content_markdown: "## 1. 서론: 성경이 말하는 진짜 복\n참된 복은 기복이 아닌 만물의 주인이신 하나님과의 올바른 관계 안에서 누리는 하늘의 평강(샬롬)입니다.\n\n## 2. 제1복 ~ 제4복: 영적 갈망과 통치\n심령의 가난함에서 시작하여 의에 주리고 목마른 자가 되는 영적 성장의 순서를 다룹니다.",
+        exegesis_markdown: "• **아쉬레이(אַשְׁרֵי)**: 시편 1편의 '복 있는 사람은'과 동일한 단어로, '바른길로 똑바로 걷는 자의 행복'을 뜻합니다.\n• **말쿠트 하샤마임(מַלְכוּת הַשָּׁמַיִם)**: 죽어서 가는 내세뿐 아니라 지금 예수님의 통치를 받는 현재적 하나님 나라를 가리킵니다.",
+        reflection_points: "1. 나는 내 영적 파산을 인정하고 주님의 은혜를 매일 갈망하는가?\n2. 주님의 의(義)로 채워지는 참된 만족을 누리고 있는가?"
+      }
+    ];
+
+    let currentFilterType = "주일설교";
+    let currentIndex = 0;
+    let filteredList = [];
+
+    async function initData() {
+      if (APPS_SCRIPT_URL) {
+        try {
+          const res = await fetch(APPS_SCRIPT_URL);
+          const json = await res.json();
+          if (json.status === "success" && json.data.length > 0) {
+            sermonList = json.data;
+          }
+        } catch (e) {
+          console.warn("Apps Script 연동 실패, 로컬 기본 데이터를 사용합니다.", e);
+        }
+      }
+      lucide.createIcons();
+      filterData();
+    }
+
+    function switchType(type) {
+      currentFilterType = type;
+      const btnSun = document.getElementById('btnSunday');
+      const btnWed = document.getElementById('btnWednesday');
+      if (type === '주일설교') {
+        btnSun.className = "flex-1 sm:flex-none px-5 py-1.5 rounded-lg text-sm font-semibold transition shadow-sm bg-white text-indigo-700";
+        btnWed.className = "flex-1 sm:flex-none px-5 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-slate-900";
+      } else {
+        btnWed.className = "flex-1 sm:flex-none px-5 py-1.5 rounded-lg text-sm font-semibold transition shadow-sm bg-white text-indigo-700";
+        btnSun.className = "flex-1 sm:flex-none px-5 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-slate-900";
+      }
+      filterData();
+    }
+
+    function filterData() {
+      filteredList = sermonList.filter(item => item.type === currentFilterType);
+      if (filteredList.length === 0) {
+        filteredList = sermonList; // fallback
+      }
+      currentIndex = 0;
+      renderCurrent();
+    }
+
+    function renderCurrent() {
+      const item = filteredList[currentIndex];
+      if (!item) return;
+
+      document.getElementById('weekLabel').textContent = item.year_week ? `${item.year_week}주차` : "";
+      document.getElementById('dateLabel').textContent = item.date || "";
+      document.getElementById('cardBadge').textContent = item.type || "";
+      document.getElementById('bibleRef').textContent = item.bible_ref || "";
+      document.getElementById('sermonTitle').textContent = item.title || "";
+      document.getElementById('preacherText').textContent = item.preacher || "";
+      document.getElementById('summaryCore').textContent = item.summary_core || "";
+      
+      const ytLink = document.getElementById('youtubeLink');
+      if (item.youtube_url) {
+        ytLink.href = item.youtube_url;
+        ytLink.classList.remove('hidden');
+      } else {
+        ytLink.classList.add('hidden');
+      }
+
+      // Markdown 파싱 및 렌더링
+      document.getElementById('tabContent-content').innerHTML = marked.parse(item.content_markdown || "작성된 요약 내용이 없습니다.");
+      document.getElementById('tabContent-exegesis').innerHTML = marked.parse(item.exegesis_markdown || "작성된 주해 내용이 없습니다.");
+
+      // 묵상 질문 파싱
+      const refBox = document.getElementById('reflectionList');
+      refBox.innerHTML = "";
+      const questions = (item.reflection_points || "").split("\n").filter(q => q.trim().length > 0);
+      if (questions.length === 0) {
+        refBox.innerHTML = "<p class='text-slate-400 text-sm'>등록된 묵상 질문이 없습니다.</p>";
+      } else {
+        questions.forEach(q => {
+          const card = document.createElement('div');
+          card.className = "p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3";
+          card.innerHTML = `<span class="text-indigo-600 font-bold mt-0.5">•</span><p class="text-sm font-medium text-slate-800 leading-relaxed">${q.replace(/^[0-9]+\.\s*/, '')}</p>`;
+          refBox.appendChild(card);
+        });
+      }
+
+      document.getElementById('prevBtn').disabled = currentIndex >= filteredList.length - 1;
+      document.getElementById('nextBtn').disabled = currentIndex <= 0;
+      document.getElementById('prevBtn').style.opacity = currentIndex >= filteredList.length - 1 ? "0.3" : "1";
+      document.getElementById('nextBtn').style.opacity = currentIndex <= 0 ? "0.3" : "1";
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (currentIndex < filteredList.length - 1) {
+        currentIndex++;
+        renderCurrent();
+      }
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderCurrent();
+      }
+    });
+
+    function setTab(tabKey) {
+      ['content', 'exegesis', 'reflection'].forEach(key => {
+        const btn = document.getElementById(`tabBtn-${key}`);
+        const content = document.getElementById(`tabContent-${key}`);
+        if (key === tabKey) {
+          btn.className = "flex-1 py-3.5 px-4 text-center text-sm font-bold border-b-2 border-indigo-600 text-indigo-700 flex items-center justify-center gap-1.5 transition";
+          content.classList.remove('hidden');
+        } else {
+          btn.className = "flex-1 py-3.5 px-4 text-center text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5 transition";
+          content.classList.add('hidden');
+        }
+      });
+      lucide.createIcons();
+    }
+
+    window.addEventListener('DOMContentLoaded', initData);
+  </script>
+</body>
+</html>
