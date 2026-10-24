@@ -3,22 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>말씀과 은혜 - 설교 요약 뷰어</title>
-  
-  <!-- Pretendard / Noto Sans KR 폰트 -->
+  <title>말씀과 은혜 - 설교 요약 DB 뷰어</title>
+
+  <!-- Google Fonts & Pretendard -->
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <style>
     :root {
-      --bg-page: #f8fafc;
+      --bg-page: #f1f5f9;
       --bg-card: #ffffff;
-      --text-main: #1e293b;
+      --text-main: #0f172a;
+      --text-sub: #475569;
       --text-muted: #64748b;
-      --border-color: #e2e8f0;
+      --border-color: #cbd5e1;
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
-      --accent-bg: #eff6ff;
+      --primary-light: #eff6ff;
     }
 
     * {
@@ -28,476 +29,641 @@
     }
 
     body {
-      font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Pretendard', 'Noto Sans KR', -apple-system, sans-serif;
       background-color: var(--bg-page);
       color: var(--text-main);
       line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
       word-break: keep-all;
     }
 
-    /* 상단 네비게이션 헤더 */
+    /* 헤더 */
     .app-header {
       background-color: #ffffff;
       border-bottom: 1px solid var(--border-color);
       position: sticky;
       top: 0;
-      z-index: 50;
-      padding: 14px 20px;
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
 
-    .header-container {
-      max-width: 900px;
+    .header-inner {
+      max-width: 1200px;
       margin: 0 auto;
+      padding: 14px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    .app-logo {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: #0f172a;
+    .brand {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #1e293b;
     }
 
-    .badge-service {
-      font-size: 0.75rem;
-      padding: 3px 8px;
-      border-radius: 9999px;
-      background-color: #dbeafe;
-      color: #1e40af;
-      font-weight: 600;
-    }
-
-    /* 본문 레이아웃 */
-    .main-wrapper {
-      max-width: 900px;
-      margin: 28px auto 60px;
+    /* 메인 2단 레이아웃 (목록 & 검색 / 상세 내용) */
+    .app-container {
+      max-width: 1200px;
+      margin: 24px auto 60px;
       padding: 0 16px;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 24px;
+      align-items: start;
     }
 
-    /* 메인 카드 */
-    .content-card {
+    @media (max-width: 900px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 좌측 탐색 사이드바 (필터 + 검색창 + 리스트) */
+    .sidebar {
       background-color: var(--bg-card);
-      border-radius: 16px;
+      border-radius: 14px;
       border: 1px solid var(--border-color);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      position: sticky;
+      top: 80px;
+      max-height: calc(100vh - 100px);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        position: static;
+        max-height: none;
+      }
+    }
+
+    /* 탭 필터 (전체 / 주일설교 / 수요예배) */
+    .filter-tabs {
+      display: flex;
+      background-color: #f1f5f9;
+      border-radius: 8px;
+      padding: 4px;
+      margin-bottom: 14px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px 0;
+      border: none;
+      background: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+
+    .tab-btn.active {
+      background-color: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* 검색창 */
+    .search-box {
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: var(--primary);
+    }
+
+    .search-box .icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .search-guide {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    /* 설교 리스트 */
+    .sermon-list {
+      overflow-y: auto;
+      flex-grow: 1;
+      list-style: none;
+      padding-right: 4px;
+    }
+
+    .sermon-item {
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background-color: #f8fafc;
+    }
+
+    .sermon-item:hover {
+      background-color: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .sermon-item.active {
+      background-color: var(--primary-light);
+      border-color: #93c5fd;
+    }
+
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .item-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .tag-sunday {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+
+    .tag-wednesday {
+      background-color: #e0e7ff;
+      color: #3730a3;
+    }
+
+    .item-date {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .item-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+      line-height: 1.35;
+    }
+
+    .item-ref {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* 우측 상세 본문 카드 */
+    .detail-card {
+      background-color: var(--bg-card);
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
       padding: 32px;
-      margin-bottom: 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      min-height: 600px;
     }
 
     @media (max-width: 640px) {
-      .content-card {
+      .detail-card {
         padding: 20px;
       }
     }
 
-    /* 설교 상단 메타 정보 헤더 */
-    .sermon-header {
-      margin-bottom: 24px;
-    }
-
-    .sermon-category {
-      display: inline-block;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--primary);
-      margin-bottom: 6px;
-    }
-
-    .sermon-title {
-      font-size: 1.65rem;
-      font-weight: 800;
-      color: #0f172a;
-      line-height: 1.35;
-      margin-bottom: 12px;
-    }
-
-    .sermon-meta-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      padding-bottom: 18px;
+    .detail-header {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
       border-bottom: 1px solid var(--border-color);
     }
 
-    .meta-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
+    .detail-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.35;
+      margin-bottom: 10px;
     }
 
-    /* 팟캐스트 오디오 다운로드 전용 카드 UI */
+    .detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 0.88rem;
+      color: var(--text-sub);
+    }
+
+    /* 팟캐스트 오디오 다운로드 박스 */
     .podcast-download-card {
       background: linear-gradient(to right, #f8fafc, #f1f5f9);
-      border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      padding: 18px 22px;
-      margin: 22px 0 28px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 20px 0 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-    }
-
-    .podcast-info-group {
-      display: flex;
-      align-items: center;
       gap: 14px;
     }
 
-    .podcast-icon-bubble {
-      width: 44px;
-      height: 44px;
-      background-color: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
+    .podcast-left {
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-      flex-shrink: 0;
+      gap: 12px;
     }
 
-    .podcast-texts h4 {
-      font-size: 0.98rem;
+    .podcast-left .icon {
+      font-size: 24px;
+    }
+
+    .podcast-left h4 {
+      font-size: 0.95rem;
       font-weight: 700;
       color: #1e293b;
-      margin-bottom: 2px;
     }
 
-    .podcast-texts p {
-      font-size: 0.82rem;
+    .podcast-left p {
+      font-size: 0.8rem;
       color: var(--text-muted);
     }
 
-    /* 다운로드 버튼 */
-    .btn-audio-download {
+    .btn-download {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 10px 18px;
+      padding: 9px 16px;
       background-color: var(--primary);
       color: #ffffff !important;
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
       border-radius: 8px;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-      transition: all 0.15s ease-in-out;
+      transition: background-color 0.15s ease;
       white-space: nowrap;
       flex-shrink: 0;
     }
 
-    .btn-audio-download:hover {
+    .btn-download:hover {
       background-color: var(--primary-hover);
-      transform: translateY(-1px);
     }
 
     @media (max-width: 600px) {
       .podcast-download-card {
         flex-direction: column;
         align-items: stretch;
-        gap: 16px;
-        padding: 16px;
       }
-      .btn-audio-download {
+      .btn-download {
         justify-content: center;
-        width: 100%;
       }
     }
 
-    /* HTML 본문 콘텐츠 래퍼 */
-    .sermon-body-html {
-      margin-top: 20px;
+    /* 본문 렌더링 컨테이너 */
+    .detail-body {
+      margin-top: 16px;
     }
 
-    /* 묵상 및 적용 섹션 */
-    .reflection-box {
-      margin-top: 36px;
-      padding: 22px;
+    /* 묵상 카드 */
+    .reflection-card {
+      margin-top: 32px;
+      padding: 20px;
       background-color: #faf5ff;
       border: 1px solid #e9d5ff;
-      border-radius: 12px;
+      border-radius: 10px;
     }
 
-    .reflection-box h3 {
-      font-size: 1.05rem;
+    .reflection-card h4 {
+      font-size: 1rem;
       font-weight: 700;
       color: #6b21a8;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      margin-bottom: 10px;
     }
 
-    .reflection-list {
-      list-style-type: none;
-      padding-left: 0;
+    .reflection-card ul {
+      padding-left: 20px;
+      font-size: 0.9rem;
+      color: #581c87;
     }
 
-    .reflection-list li {
-      position: relative;
-      padding-left: 22px;
-      margin-bottom: 8px;
-      font-size: 0.92rem;
-      color: #4c1d95;
-      line-height: 1.6;
+    .reflection-card li {
+      margin-bottom: 6px;
     }
 
-    .reflection-list li::before {
-      content: "✔";
-      position: absolute;
-      left: 0;
-      color: #9333ea;
-      font-size: 0.85rem;
-    }
-
-    /* 하단 푸터 */
-    .app-footer {
+    /* 로딩 및 빈 상태 */
+    .state-message {
       text-align: center;
-      font-size: 0.82rem;
+      padding: 60px 20px;
       color: var(--text-muted);
-      margin-top: 40px;
+      font-size: 0.95rem;
     }
   </style>
 </head>
 <body>
 
-  <!-- 헤더 네비게이션 -->
+  <!-- 헤더 -->
   <header class="app-header">
-    <div class="header-container">
-      <div class="app-logo">
+    <div class="header-inner">
+      <div class="brand">
         <span>📖</span>
-        <span>설교 요약 뷰어</span>
+        <span>설교 요약 DB 검색 뷰어</span>
       </div>
-      <span class="badge-service" id="headerDateBadge">2026-10-14</span>
+      <div id="statusBadge" style="font-size: 0.8rem; color: #16a34a; font-weight: 600;">
+        ● 데이터 실시간 연동
+      </div>
     </div>
   </header>
 
-  <!-- 메인 본문 컨테이너 -->
-  <main class="main-wrapper">
-    <article class="content-card">
+  <!-- 2열 레이아웃 컨테이너 -->
+  <div class="app-container">
+
+    <!-- 좌측 사이드바: 검색 & 필터 & 리스트 -->
+    <aside class="sidebar">
       
-      <!-- 설교 기본 정보 -->
-      <header class="sermon-header">
-        <span class="sermon-category" id="sermonType">수요예배</span>
-        <h1 class="sermon-title" id="sermonTitle">한눈에 이해하는 마태복음 팔복(八福) 총정리</h1>
-        
-        <div class="sermon-meta-row">
-          <div class="meta-item">
-            <span>📅</span> <span id="sermonDate">2026년 10월 14일</span>
-          </div>
-          <div class="meta-item">
-            <span>👤</span> <span id="sermonPreacher">한성찬 담임목사</span>
-          </div>
-          <div class="meta-item">
-            <span>📜</span> <span id="sermonBible">마태복음 5:1~12</span>
-          </div>
-        </div>
-      </header>
+      <!-- 1. 선택란: 전체 / 주일설교 / 수요예배 -->
+      <div class="filter-tabs">
+        <button class="tab-btn active" data-type="ALL" onclick="setFilterType('ALL', this)">전체</button>
+        <button class="tab-btn" data-type="주일설교" onclick="setFilterType('주일설교', this)">주일설교</button>
+        <button class="tab-btn" data-type="수요예배" onclick="setFilterType('수요예배', this)">수요예배</button>
+      </div>
 
-      <!-- 팟캐스트 오디오 다운로드 전용 UI (웹 재생기 대신 배치) -->
-      <section class="podcast-download-card" id="podcastSection">
-        <div class="podcast-info-group">
-          <div class="podcast-icon-bubble">🎙️</div>
-          <div class="podcast-texts">
-            <h4>설교 팟캐스트 음원 (MP3/M4A)</h4>
-            <p>스트리밍 대신 기기에 다운로드하여 즐겨 쓰는 오디오 플레이어로 청취하세요.</p>
-          </div>
-        </div>
-        
-        <a id="btnAudioDownload" 
-           href="#" 
-           download="마태복음_팔복_총정리.m4a" 
-           target="_blank" 
-           rel="noopener noreferrer" 
-           class="btn-audio-download">
-          <span>📥</span> <span>음원 파일 다운로드</span>
-        </a>
-      </section>
+      <!-- 2. 검색창 (I열~L열 대상) -->
+      <div class="search-box">
+        <span class="icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="설교 요약, 본문 주석, 묵상 키워드 검색..." oninput="handleSearch()" />
+      </div>
+      <div class="search-guide">
+        * 핵심요약(I), 본문내용(J), 주석(K), 묵상질문(L) 대상 검색
+      </div>
 
-      <!-- 구글 시트 J열(HTML 요약) 렌더링 영역 -->
-      <section class="sermon-body-html" id="sermonBodyHtml">
-        <!-- JavaScript에서 동적으로 주입됩니다 -->
-      </section>
+      <!-- 3. 설교 리스트 -->
+      <ul class="sermon-list" id="sermonList">
+        <li class="state-message">설교 데이터를 불러오는 중...</li>
+      </ul>
+    </aside>
 
-      <!-- 나눔과 묵상 질문 (L열) -->
-      <section class="reflection-box" id="reflectionSection">
-        <h3>💭 함께 나누는 묵상 질문</h3>
-        <ul class="reflection-list" id="reflectionList">
-          <!-- 동적 항목 삽입 -->
-        </ul>
-      </section>
+    <!-- 우측 메인 영역: 선택한 설교의 상세 내용 표시 -->
+    <main class="detail-card" id="detailCard">
+      <div class="state-message">목록에서 확인하실 설교를 선택해 주세요.</div>
+    </main>
 
-    </article>
-
-    <footer class="app-footer">
-      <p>본 요약은 성도들의 깊은 묵상과 복습을 위해 제공됩니다.</p>
-    </footer>
-  </main>
+  </div>
 
   <script>
+    // 연동할 구글 스프레드시트 설정
+    const SHEET_ID = '18iQOYsK_fbvYaWQSBt1diJXQU6Nh1TYVpjQNxG-oNQI';
+    const SHEET_NAME = '설교DB';
+
+    let allSermons = [];
+    let filteredSermons = [];
+    let currentFilterType = 'ALL';
+    let currentKeyword = '';
+    let selectedId = null;
+
     /**
-     * 구글 드라이브 공유 링크를 브라우저 '직접 다운로드' URL로 변환하는 유틸리티
+     * 구글 드라이브 링크를 '직접 다운로드' URL로 변환
      */
     function convertToDirectDownloadUrl(url) {
       if (!url) return '';
-      
-      // 구글 드라이브 패턴 매칭 (/file/d/ID 또는 id=ID)
       const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
       if (match && match[1]) {
-        // 직접 다운로드 엔드포인트 생성
         return `https://drive.google.com/uc?export=download&id=${match[1]}`;
       }
       return url;
     }
 
     /**
-     * 스프레드시트의 레코드 데이터 모형
-     * (Google Apps Script API, Google Visualization API 또는 JSON 페치 연동 시 이 객체에 바인딩)
+     * 구글 스프레드시트 데이터를 JSON으로 불러오기 (Google Visualization API 활용)
      */
-    const sermonData = {
-      title: "한눈에 이해하는 마태복음 팔복(八福) 총정리",
-      type: "수요예배",
-      date: "2026-10-14",
-      preacher: "한성찬 담임목사",
-      bible_ref: "마태복음 5:1~12",
-      // 구글 드라이브 음원 링크 예시
-      audio_url: "https://drive.google.com/file/d/1U9neX7KWHRXS115b7mLTNQw_qRgaAxr7/view?usp=sharing",
-      // 구글 시트 J2 셀에 들어간 P4 스타일의 HTML 소스
-      content_html: `
-        <div style="font-family: 'Noto Sans KR', sans-serif; line-height: 1.8; color: #334155; word-break: keep-all;">
-          <div style="margin-bottom: 22px; padding: 14px 18px; background-color: #f1f5f9; border-radius: 8px; border-left: 4px solid #64748b; font-size: 14.5px;">
-            <p style="margin: 3px 0;"><strong>• 설교 출처:</strong> 월내교회 수요예배 (2026년 10월 14일) / 한성찬 담임목사</p>
-            <p style="margin: 3px 0;"><strong>• 본문 말씀:</strong> 마태복음 5장 1절 ~ 12절 (팔복 총정리)</p>
-          </div>
-
-          <div style="margin-bottom: 24px; padding: 20px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6;">
-            <h2 style="font-size: 18px; font-weight: bold; color: #1e40af; margin-top: 0; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #cbd5e1;">
-              1. 서론: 성경이 말하는 진짜 ‘복’과 팔복의 핵심 주제
-            </h2>
-            <p style="margin: 8px 0; font-size: 14.5px;">
-              성경은 창세기 1장 28절로 시작하여 요한계시록 22장 14절로 끝나는 <strong>‘복의 책’</strong>입니다. 성경이 말하는 참된 복은 물질이나 건강의 성공만을 의미하는 기복주의가 아니라, <span style="color: #2563eb; font-weight: bold;">하나님과의 바른 관계 안에서 누리는 내적인 평안, 만족, 안식</span>입니다.
-            </p>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13.5px; background-color: #ffffff; border: 1px solid #cbd5e1;">
-              <thead>
-                <tr style="background-color: #eff6ff; border-bottom: 2px solid #bfdbfe;">
-                  <th style="width: 30%; padding: 10px; font-weight: bold; text-align: center; color: #1e3a8a; border-right: 1px solid #cbd5e1;">핵심 개념</th>
-                  <th style="width: 70%; padding: 10px; font-weight: bold; text-align: left; color: #1e3a8a;">설교 핵심 내용</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style="border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 10px; text-align: center; font-weight: bold; border-right: 1px solid #e2e8f0;">‘천국’의 의미</td>
-                  <td style="padding: 10px;">유대인은 거룩한 하나님의 이름을 ‘하늘’로 대체했습니다. 따라서 천국은 <strong>‘하나님의 나라(통치와 다스림)’</strong>를 뜻합니다.</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px; text-align: center; font-weight: bold; border-right: 1px solid #e2e8f0;">수미쌍관 구조</td>
-                  <td style="padding: 10px;">1번째 복과 8번째 복은 동일하게 “천국이 그들의 것임이요”로 끝맺으며, 현재 이 땅에서부터 주님의 다스림을 누리는 복임을 보여줍니다.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div style="margin-bottom: 24px; padding: 20px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; border-left: 4px solid #10b981;">
-            <h2 style="font-size: 18px; font-weight: bold; color: #047857; margin-top: 0; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #cbd5e1;">
-              2. 제1복 ~ 제4복: 영적 파산에서 배부름까지
-            </h2>
-            <p style="font-size: 14px; margin-bottom: 10px;">자신의 영적 무능함을 고백하고 주님의 의를 사모하는 내적 변화의 단계입니다.</p>
-            <ul style="padding-left: 20px; font-size: 14px;">
-              <li><strong>심령이 가난한 자:</strong> 영적 파산자임을 깨닫고 주님의 은혜만 간절히 구하는 자</li>
-              <li><strong>애통하는 자:</strong> 자신의 죄성과 이웃의 아픔을 품고 주께 매달릴 때 임하는 위로</li>
-              <li><strong>온유한 자:</strong> 성령과 말씀에 의해 길들여지고 통제된 성품</li>
-              <li><strong>의에 주리고 목마른 자:</strong> 어린양 예수님의 다스림을 받아 누리는 영혼의 참된 만족</li>
-            </ul>
-          </div>
-
-          <div style="margin-bottom: 24px; padding: 20px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; border-left: 4px solid #8b5cf6;">
-            <h2 style="font-size: 18px; font-weight: bold; color: #6d28d9; margin-top: 0; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #cbd5e1;">
-              3. 제5복 ~ 제8복: 이웃을 향한 성품과 고난을 이기는 신앙
-            </h2>
-            <p style="font-size: 14px; margin-bottom: 10px;">믿음이 삶으로 표현되며 이웃과 세상을 향해 뻗어나가는 성도의 삶입니다.</p>
-            <ul style="padding-left: 20px; font-size: 14px;">
-              <li><strong>긍휼히 여기는 자:</strong> 선한 사마리아인처럼 구체적인 행동으로 이웃을 돕는 품이 넓은 신앙</li>
-              <li><strong>마음이 청결한 자:</strong> 마음에 두 마음을 품지 않고 주님만 바라봄으로 하나님을 깊이 아는 삶</li>
-              <li><strong>화평하게 하는 자:</strong> 분쟁을 막고 관계를 회복시키는 화목의 사명자</li>
-              <li><strong>박해를 받은 자:</strong> 의와 복음을 위해 받는 고난을 부끄러워하지 않고 기쁨과 상급으로 여기는 신앙</li>
-            </ul>
-          </div>
-
-          <div style="padding: 18px; background-color: #fffbeb; border: 1px solid #fde68a; border-left: 5px solid #f5960b; border-radius: 8px;">
-            <h3 style="font-size: 16px; font-weight: bold; color: #92400e; margin-top: 0; margin-bottom: 8px;">
-              💡 결론: 팔복의 주인공이신 예수님을 닮아가는 삶
-            </h3>
-            <p style="margin: 0; font-size: 14px; color: #78350f;">
-              팔복은 성도 개인뿐 아니라 <strong>교회 공동체</strong>가 함께 살아내야 할 은혜의 모범입니다. 내 힘이 아닌 성령님의 도우심으로 주님을 닮아가는 복된 공동체가 됩시다.
-            </p>
-          </div>
-        </div>
-      `,
-      reflection_points: [
-        "나는 매일 하나님 앞에서 영적 파산자의 겸손함으로 주님의 은혜를 구하고 있습니까?",
-        "신앙의 연륜이 쌓일수록 다른 사람을 품어주는 긍휼의 그릇이 넓어지고 있습니까?",
-        "가정과 일터, 교회 안에서 평화를 만드는 화목의 직분을 어떻게 실천할 수 있습니까?"
-      ]
-    };
-
-    /**
-     * 화면 렌더링 초기화
-     */
-    function initView(data) {
-      // 1. 헤더 및 메타데이터 바인딩
-      document.getElementById('headerDateBadge').textContent = data.date;
-      document.getElementById('sermonType').textContent = data.type;
-      document.getElementById('sermonTitle').textContent = data.title;
-      document.getElementById('sermonDate').textContent = data.date;
-      document.getElementById('sermonPreacher').textContent = data.preacher;
-      document.getElementById('sermonBible').textContent = data.bible_ref;
-
-      // 2. 오디오 다운로드 버튼 제어
-      const downloadBtn = document.getElementById('btnAudioDownload');
-      const podcastCard = document.getElementById('podcastSection');
-
-      if (data.audio_url) {
-        const directUrl = convertToDirectDownloadUrl(data.audio_url);
-        downloadBtn.href = directUrl;
+    async function fetchSermonsFromSheet() {
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+      
+      try {
+        const res = await fetch(url);
+        const text = await res.text();
         
-        // 다운로드 파일명 동적 지정
-        const safeTitle = data.title.replace(/\s+/g, '_').substring(0, 30);
-        downloadBtn.setAttribute('download', `${safeTitle}_음원.m4a`);
-      } else {
-        // 음원 주소가 없을 경우 버튼 비활성화 처리
-        podcastCard.style.display = 'none';
-      }
+        // JSON 구문 추출 (gviz callback 래퍼 제거)
+        const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+        const data = JSON.parse(jsonString);
+        
+        const rows = data.table.rows;
+        
+        /**
+         * 열 매핑:
+         * A(0): id, B(1): year_week, C(2): type (주일설교/수요예배), D(3): date, E(4): title,
+         * F(5): preacher, G(6): bible_ref, H(7): youtube_url/audio,
+         * I(8): summary_core, J(9): content_markdown/html, K(10): exegesis, L(11): reflection_points, M(12): is_published
+         */
+        allSermons = rows.map((r, idx) => {
+          const c = r.c;
+          const getVal = (i) => (c[i] && c[i].v !== null && c[i].v !== undefined) ? String(c[i].v) : '';
 
-      // 3. 스프레드시트 J열의 HTML 콘텐츠 주입
-      document.getElementById('sermonBodyHtml').innerHTML = data.content_html;
+          return {
+            id: getVal(0) || `sermon-${idx}`,
+            year_week: getVal(1),
+            type: getVal(2).trim(),
+            date: getVal(3).split('T')[0], // yyyy-mm-dd
+            title: getVal(4),
+            preacher: getVal(5),
+            bible_ref: getVal(6),
+            audio_url: getVal(7),
+            summary_core: getVal(8),      // I열
+            content_html: getVal(9),      // J열
+            exegesis: getVal(10),         // K열
+            reflection_points: getVal(11),// L열
+            is_published: getVal(12)
+          };
+        }).filter(item => item.title); // 빈 행 제외
 
-      // 4. 나눔 질문 리스트 바인딩
-      const reflectionListEl = document.getElementById('reflectionList');
-      reflectionListEl.innerHTML = '';
-      if (data.reflection_points && data.reflection_points.length > 0) {
-        data.reflection_points.forEach(point => {
-          const li = document.createElement('li');
-          li.textContent = point;
-          reflectionListEl.appendChild(li);
-        });
-      } else {
-        document.getElementById('reflectionSection').style.display = 'none';
+        applyFilters();
+
+        // 첫 번째 항목 자동 선택
+        if (filteredSermons.length > 0) {
+          selectSermon(filteredSermons[0].id);
+        }
+      } catch (err) {
+        console.error('시트 데이터 로드 실패:', err);
+        document.getElementById('sermonList').innerHTML = `
+          <li class="state-message" style="color: #dc2626;">
+            데이터를 불러오지 못했습니다.<br>스프레드시트 공유 권한(링크가 있는 모든 사용자-뷰어)을 확인해 주세요.
+          </li>`;
       }
     }
 
-    // 페이지 로드 시 렌더링 실행
-    window.addEventListener('DOMContentLoaded', () => {
-      initView(sermonData);
-    });
+    /**
+     * 예배 구분 선택란 핸들러
+     */
+    function setFilterType(type, buttonEl) {
+      currentFilterType = type;
+      
+      // 탭 활성화 UI
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      buttonEl.classList.add('active');
+
+      applyFilters();
+    }
+
+    /**
+     * 검색 입력 핸들러
+     */
+    function handleSearch() {
+      currentKeyword = document.getElementById('searchInput').value.trim().toLowerCase();
+      applyFilters();
+    }
+
+    /**
+     * 필터 & 검색 적용 (핵심: I열 ~ L열 대상 검색)
+     */
+    function applyFilters() {
+      filteredSermons = allSermons.filter(item => {
+        // 1. 예배 유형(주일설교 / 수요예배) 필터링
+        if (currentFilterType !== 'ALL' && item.type !== currentFilterType) {
+          return false;
+        }
+
+        // 2. 검색어가 있을 경우: I열(요약), J열(본문HTML), K열(주석), L열(묵상질문) 대상 단어 검색
+        if (currentKeyword) {
+          const searchableText = [
+            item.summary_core,       // I열
+            item.content_html,       // J열
+            item.exegesis,           // K열
+            item.reflection_points   // L열
+          ].join(' ').toLowerCase();
+
+          if (!searchableText.includes(currentKeyword)) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      renderList();
+    }
+
+    /**
+     * 좌측 설교 목록 렌더링
+     */
+    function renderList() {
+      const listEl = document.getElementById('sermonList');
+      listEl.innerHTML = '';
+
+      if (filteredSermons.length === 0) {
+        listEl.innerHTML = `<li class="state-message">일치하는 설교 내용이 없습니다.</li>`;
+        return;
+      }
+
+      filteredSermons.forEach(item => {
+        const li = document.createElement('li');
+        li.className = `sermon-item ${item.id === selectedId ? 'active' : ''}`;
+        li.onclick = () => selectSermon(item.id);
+
+        const isSunday = item.type === '주일설교';
+        const tagClass = isSunday ? 'tag-sunday' : 'tag-wednesday';
+
+        li.innerHTML = `
+          <div class="item-top">
+            <span class="item-tag ${tagClass}">${item.type}</span>
+            <span class="item-date">${item.date}</span>
+          </div>
+          <div class="item-title">${item.title}</div>
+          <div class="item-ref">${item.bible_ref} | ${item.preacher}</div>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    /**
+     * 우측 상세 뷰어에 설교 내용 표시
+     */
+    function selectSermon(id) {
+      selectedId = id;
+      renderList(); // 활성 상태 클래스 업데이트
+
+      const sermon = allSermons.find(s => s.id === id);
+      if (!sermon) return;
+
+      const detailEl = document.getElementById('detailCard');
+
+      // 팟캐스트 오디오 다운로드 링크 생성
+      const directDownloadUrl = sermon.audio_url ? convertToDirectDownloadUrl(sermon.audio_url) : null;
+      const downloadButtonHtml = directDownloadUrl ? `
+        <div class="podcast-download-card">
+          <div class="podcast-left">
+            <span class="icon">🎙️</span>
+            <div>
+              <h4>설교 팟캐스트 오디오</h4>
+              <p>기기에 음원을 다운로드하여 원하는 플레이어로 편리하게 청취하세요.</p>
+            </div>
+          </div>
+          <a href="${directDownloadUrl}" 
+             download="${sermon.title}.m4a" 
+             target="_blank" 
+             rel="noopener noreferrer" 
+             class="btn-download">
+            <span>📥</span> 음원 다운로드
+          </a>
+        </div>
+      ` : '';
+
+      // 묵상 질문 (L열) 목록 생성
+      let reflectionHtml = '';
+      if (sermon.reflection_points) {
+        const points = sermon.reflection_points.split('\n').filter(p => p.trim());
+        reflectionHtml = `
+          <div class="reflection-card">
+            <h4>💭 말씀 묵상 및 적용 질문</h4>
+            <ul>
+              ${points.map(pt => `<li>${pt.replace(/^[0-9]+[\.\)]\s*/, '')}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+
+      // 상세 영역 조합
+      detailEl.innerHTML = `
+        <header class="detail-header">
+          <h1 class="detail-title">${sermon.title}</h1>
+          <div class="detail-meta">
+            <span>📅 ${sermon.date}</span>
+            <span>🏷️ ${sermon.type}</span>
+            <span>👤 ${sermon.preacher}</span>
+            <span>📜 ${sermon.bible_ref}</span>
+          </div>
+        </header>
+
+        ${downloadButtonHtml}
+
+        <div class="detail-body">
+          ${sermon.content_html}
+        </div>
+
+        ${reflectionHtml}
+      `;
+    }
+
+    // 초기 실행
+    window.addEventListener('DOMContentLoaded', fetchSermonsFromSheet);
   </script>
 </body>
 </html>
