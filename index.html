@@ -3,23 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>말씀과 은혜 - 설교 요약 DB 뷰어</title>
+  <title>말씀과 은혜 - 설교 요약 아카이브</title>
 
-  <!-- Google Fonts & Pretendard -->
+  <!-- Google Fonts & Pretendard CDN -->
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <style>
     :root {
-      --bg-page: #f1f5f9;
+      --bg-page: #f8fafc;
       --bg-card: #ffffff;
       --text-main: #0f172a;
       --text-sub: #475569;
       --text-muted: #64748b;
-      --border-color: #cbd5e1;
+      --border-color: #e2e8f0;
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
       --primary-light: #eff6ff;
+      --youtube-red: #ef4444;
     }
 
     * {
@@ -36,18 +37,18 @@
       word-break: keep-all;
     }
 
-    /* 헤더 */
+    /* 상단 헤더 */
     .app-header {
       background-color: #ffffff;
       border-bottom: 1px solid var(--border-color);
       position: sticky;
       top: 0;
       z-index: 100;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
 
     .header-inner {
-      max-width: 1200px;
+      max-width: 1240px;
       margin: 0 auto;
       padding: 14px 20px;
       display: flex;
@@ -64,29 +65,38 @@
       color: #1e293b;
     }
 
-    /* 메인 2단 레이아웃 (목록 & 검색 / 상세 내용) */
+    .sync-status {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #16a34a;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* 레이아웃 */
     .app-container {
-      max-width: 1200px;
+      max-width: 1240px;
       margin: 24px auto 60px;
       padding: 0 16px;
       display: grid;
-      grid-template-columns: 360px 1fr;
+      grid-template-columns: 370px 1fr;
       gap: 24px;
       align-items: start;
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 960px) {
       .app-container {
         grid-template-columns: 1fr;
       }
     }
 
-    /* 좌측 탐색 사이드바 (필터 + 검색창 + 리스트) */
+    /* 좌측 사이드바 */
     .sidebar {
       background-color: var(--bg-card);
       border-radius: 14px;
       border: 1px solid var(--border-color);
-      padding: 20px;
+      padding: 18px;
       position: sticky;
       top: 80px;
       max-height: calc(100vh - 100px);
@@ -95,7 +105,7 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 960px) {
       .sidebar {
         position: static;
         max-height: none;
@@ -108,7 +118,7 @@
       background-color: #f1f5f9;
       border-radius: 8px;
       padding: 4px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .tab-btn {
@@ -116,7 +126,7 @@
       padding: 8px 0;
       border: none;
       background: none;
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
@@ -128,21 +138,27 @@
     .tab-btn.active {
       background-color: #ffffff;
       color: var(--primary);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
-    /* 검색창 */
+    /* 검색창 & 주차별 필터 */
+    .filter-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
     .search-box {
-      margin-bottom: 14px;
       position: relative;
     }
 
     .search-box input {
       width: 100%;
-      padding: 10px 14px 10px 38px;
+      padding: 9px 12px 9px 36px;
       border-radius: 8px;
       border: 1px solid var(--border-color);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       outline: none;
       transition: border-color 0.2s;
     }
@@ -160,8 +176,20 @@
       color: var(--text-muted);
     }
 
-    .search-guide {
-      font-size: 0.76rem;
+    .week-select {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background-color: #ffffff;
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .search-hint {
+      font-size: 0.74rem;
       color: var(--text-muted);
       margin-bottom: 12px;
       line-height: 1.4;
@@ -178,15 +206,15 @@
     .sermon-item {
       padding: 12px 14px;
       border-radius: 8px;
-      border: 1px solid transparent;
+      border: 1px solid var(--border-color);
       margin-bottom: 8px;
       cursor: pointer;
       transition: all 0.15s ease;
-      background-color: #f8fafc;
+      background-color: #ffffff;
     }
 
     .sermon-item:hover {
-      background-color: #f1f5f9;
+      background-color: #f8fafc;
       border-color: #cbd5e1;
     }
 
@@ -199,7 +227,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
     }
 
     .item-tag {
@@ -220,7 +248,7 @@
     }
 
     .item-date {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--text-muted);
     }
 
@@ -233,8 +261,26 @@
     }
 
     .item-ref {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
+    }
+
+    .btn-load-more {
+      width: 100%;
+      padding: 8px;
+      background-color: #f1f5f9;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background-color 0.15s;
+    }
+
+    .btn-load-more:hover {
+      background-color: #e2e8f0;
     }
 
     /* 우측 상세 본문 카드 */
@@ -264,7 +310,7 @@
       font-weight: 800;
       color: #0f172a;
       line-height: 1.35;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .detail-meta {
@@ -275,41 +321,45 @@
       color: var(--text-sub);
     }
 
-    /* 팟캐스트 오디오 다운로드 박스 */
-    .podcast-download-card {
+    /* 16:9 반응형 유튜브 비디오 임베드 컨테이너 */
+    .media-player-wrapper {
+      margin: 20px 0 26px;
+      border-radius: 12px;
+      overflow: hidden;
+      background-color: #000000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .video-responsive {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 비율 고정 */
+      height: 0;
+      overflow: hidden;
+    }
+
+    .video-responsive iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    /* 오디오 전용 카드 (구글 드라이브 음원 링크일 경우 폴백) */
+    .audio-notice-card {
       background: linear-gradient(to right, #f8fafc, #f1f5f9);
       border: 1px solid var(--border-color);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 16px 20px;
-      margin: 20px 0 24px;
+      margin: 20px 0 26px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 14px;
     }
 
-    .podcast-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .podcast-left .icon {
-      font-size: 24px;
-    }
-
-    .podcast-left h4 {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #1e293b;
-    }
-
-    .podcast-left p {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .btn-download {
+    .btn-audio-link {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -320,26 +370,10 @@
       font-size: 0.88rem;
       font-weight: 600;
       border-radius: 8px;
-      transition: background-color 0.15s ease;
       white-space: nowrap;
-      flex-shrink: 0;
     }
 
-    .btn-download:hover {
-      background-color: var(--primary-hover);
-    }
-
-    @media (max-width: 600px) {
-      .podcast-download-card {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .btn-download {
-        justify-content: center;
-      }
-    }
-
-    /* 본문 렌더링 컨테이너 */
+    /* 본문 영역 */
     .detail-body {
       margin-top: 16px;
     }
@@ -370,7 +404,6 @@
       margin-bottom: 6px;
     }
 
-    /* 로딩 및 빈 상태 */
     .state-message {
       text-align: center;
       padding: 60px 20px;
@@ -381,178 +414,221 @@
 </head>
 <body>
 
-  <!-- 헤더 -->
+  <!-- 상단 네비게이션 헤더 -->
   <header class="app-header">
     <div class="header-inner">
       <div class="brand">
         <span>📖</span>
-        <span>설교 요약 DB 검색 뷰어</span>
+        <span>설교 요약 DB 아카이브</span>
       </div>
-      <div id="statusBadge" style="font-size: 0.8rem; color: #16a34a; font-weight: 600;">
-        ● 데이터 실시간 연동
+      <div class="sync-status">
+        ● 구글 시트 실시간 연동
       </div>
     </div>
   </header>
 
-  <!-- 2열 레이아웃 컨테이너 -->
+  <!-- 메인 2열 레이아웃 -->
   <div class="app-container">
 
-    <!-- 좌측 사이드바: 검색 & 필터 & 리스트 -->
+    <!-- 좌측 탐색 사이드바 -->
     <aside class="sidebar">
       
-      <!-- 1. 선택란: 전체 / 주일설교 / 수요예배 -->
+      <!-- 1. 예배 유형 선택 탭 -->
       <div class="filter-tabs">
         <button class="tab-btn active" data-type="ALL" onclick="setFilterType('ALL', this)">전체</button>
         <button class="tab-btn" data-type="주일설교" onclick="setFilterType('주일설교', this)">주일설교</button>
         <button class="tab-btn" data-type="수요예배" onclick="setFilterType('수요예배', this)">수요예배</button>
       </div>
 
-      <!-- 2. 검색창 (I열~L열 대상) -->
-      <div class="search-box">
-        <span class="icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="설교 요약, 본문 주석, 묵상 키워드 검색..." oninput="handleSearch()" />
-      </div>
-      <div class="search-guide">
-        * 핵심요약(I), 본문내용(J), 주석(K), 묵상질문(L) 대상 검색
+      <!-- 2. 검색창 & 주차별(Year-Week) 필터 -->
+      <div class="filter-controls">
+        <div class="search-box">
+          <span class="icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="설교 내용, 주석, 묵상 키워드..." oninput="handleSearch()" />
+        </div>
+        
+        <!-- 대용량 대비: 주차별 드롭다운 -->
+        <select id="weekSelect" class="week-select" onchange="handleWeekFilter()">
+          <option value="ALL">전체 주차 보기</option>
+        </select>
       </div>
 
-      <!-- 3. 설교 리스트 -->
+      <div class="search-hint">
+        * 핵심요약(I), 본문(J), 주석(K), 묵상(L) 대상 통합 검색
+      </div>
+
+      <!-- 3. 설교 리스트 및 페이징 더보기 -->
       <ul class="sermon-list" id="sermonList">
         <li class="state-message">설교 데이터를 불러오는 중...</li>
       </ul>
+      <button id="btnLoadMore" class="btn-load-more" style="display: none;" onclick="loadMoreItems()">
+        + 목록 더보기
+      </button>
     </aside>
 
-    <!-- 우측 메인 영역: 선택한 설교의 상세 내용 표시 -->
+    <!-- 우측 상세 메인 영역 -->
     <main class="detail-card" id="detailCard">
-      <div class="state-message">목록에서 확인하실 설교를 선택해 주세요.</div>
+      <div class="state-message">목록에서 설교를 선택하시면 상세 요약과 영상이 표시됩니다.</div>
     </main>
 
   </div>
 
   <script>
-    // 연동할 구글 스프레드시트 설정
+    /**
+     * =========================================================================
+     * [구글 스프레드시트 열(Column) 매핑 주석]
+     * 시트 URL: https://docs.google.com/spreadsheets/d/18iQOYsK_fbvYaWQSBt1diJXQU6Nh1TYVpjQNxG-oNQI/edit
+     * 시트명: '설교DB'
+     *
+     * 인덱스 | 시트 열 | 필드명              | 프론트엔드 연동 용도
+     * -------+---------+--------------------+-------------------------------------------
+     *  c[0]  |   A열   | id                 | 고유 레코드 식별자 (리스트 선택 매핑)
+     *  c[1]  |   B열   | year_week          | 주차 정보 (대용량 대비 주차별 필터 드롭다운)
+     *  c[2]  |   C열   | type               | 예배 유형 탭 필터 ('주일설교' / '수요예배')
+     *  c[3]  |   D열   | date               | 설교 일자 (yyyy-mm-dd 표시)
+     *  c[4]  |   E열   | title              | 설교 제목 (리스트 및 본문 헤더)
+     *  c[5]  |   F열   | preacher           | 설교자 (담임목사 등 정보 표시)
+     *  c[6]  |   G열   | bible_ref          | 본문 성경 말씀 구절
+     *  c[7]  |   H열   | youtube_url        | 유튜브 링크 (본문 상단 Iframe 영상 임베드)
+     *  c[8]  |   I열   | summary_core       | 설교 핵심 요약 (키워드 검색 대상)
+     *  c[9]  |   J열   | content_html       | 설교 본문 전체 HTML/마크다운 (렌더링 및 검색)
+     *  c[10] |   K열   | exegesis_markdown  | 원어 분석 및 신학 주석 (키워드 검색 대상)
+     *  c[11] |   L열   | reflection_points  | 나눔과 묵상 질문 (키워드 검색 및 하단 박스 표시)
+     *  c[12] |   M열   | is_published       | 발행 상태 플래그
+     * =========================================================================
+     */
+
     const SHEET_ID = '18iQOYsK_fbvYaWQSBt1diJXQU6Nh1TYVpjQNxG-oNQI';
     const SHEET_NAME = '설교DB';
 
+    // 전역 상태 변수
     let allSermons = [];
     let filteredSermons = [];
     let currentFilterType = 'ALL';
+    let currentWeekFilter = 'ALL';
     let currentKeyword = '';
     let selectedId = null;
 
+    // 대용량 데이터 대비 페이지네이션
+    const ITEMS_PER_PAGE = 10;
+    let visibleCount = ITEMS_PER_PAGE;
+
     /**
-     * 구글 드라이브 링크를 '직접 다운로드' URL로 변환
+     * 일반 유튜브 주소에서 11자리 비디오 ID 추출
      */
-    function convertToDirectDownloadUrl(url) {
-      if (!url) return '';
-      const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-      if (match && match[1]) {
-        return `https://drive.google.com/uc?export=download&id=${match[1]}`;
-      }
-      return url;
+    function extractYouTubeVideoId(url) {
+      if (!url) return null;
+      // youtu.be/ID, youtube.com/watch?v=ID, youtube.com/embed/ID, youtube.com/shorts/ID 대응 정규식
+      const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/;
+      const match = url.match(regExp);
+      return match ? match[1] : null;
     }
 
     /**
-     * 구글 스프레드시트 데이터를 JSON으로 불러오기 (Google Visualization API 활용)
+     * 스프레드시트 데이터 비동기 로드
      */
-    async function fetchSermonsFromSheet() {
+    async function fetchSermonDatabase() {
       const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
       
       try {
         const res = await fetch(url);
         const text = await res.text();
         
-        // JSON 구문 추출 (gviz callback 래퍼 제거)
+        // JSON 구문 추출
         const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
         const data = JSON.parse(jsonString);
-        
         const rows = data.table.rows;
-        
-        /**
-         * 열 매핑:
-         * A(0): id, B(1): year_week, C(2): type (주일설교/수요예배), D(3): date, E(4): title,
-         * F(5): preacher, G(6): bible_ref, H(7): youtube_url/audio,
-         * I(8): summary_core, J(9): content_markdown/html, K(10): exegesis, L(11): reflection_points, M(12): is_published
-         */
+
         allSermons = rows.map((r, idx) => {
           const c = r.c;
           const getVal = (i) => (c[i] && c[i].v !== null && c[i].v !== undefined) ? String(c[i].v) : '';
 
           return {
             id: getVal(0) || `sermon-${idx}`,
-            year_week: getVal(1),
+            year_week: getVal(1).trim(),
             type: getVal(2).trim(),
-            date: getVal(3).split('T')[0], // yyyy-mm-dd
+            date: getVal(3).split('T')[0],
             title: getVal(4),
             preacher: getVal(5),
             bible_ref: getVal(6),
-            audio_url: getVal(7),
-            summary_core: getVal(8),      // I열
-            content_html: getVal(9),      // J열
-            exegesis: getVal(10),         // K열
-            reflection_points: getVal(11),// L열
+            youtube_url: getVal(7).trim(),
+            summary_core: getVal(8),
+            content_html: getVal(9),
+            exegesis: getVal(10),
+            reflection_points: getVal(11),
             is_published: getVal(12)
           };
-        }).filter(item => item.title); // 빈 행 제외
+        }).filter(item => item.title);
 
+        initWeekDropdown();
         applyFilters();
 
-        // 첫 번째 항목 자동 선택
         if (filteredSermons.length > 0) {
           selectSermon(filteredSermons[0].id);
         }
       } catch (err) {
-        console.error('시트 데이터 로드 실패:', err);
+        console.error('시트 연동 실패:', err);
         document.getElementById('sermonList').innerHTML = `
           <li class="state-message" style="color: #dc2626;">
-            데이터를 불러오지 못했습니다.<br>스프레드시트 공유 권한(링크가 있는 모든 사용자-뷰어)을 확인해 주세요.
+            데이터를 불러올 수 없습니다.<br>스프레드시트의 공유 권한(링크가 있는 모든 사용자-뷰어)을 확인해 주세요.
           </li>`;
       }
     }
 
     /**
-     * 예배 구분 선택란 핸들러
+     * 주차별(B열) 셀렉트박스 동적 생성
+     */
+    function initWeekDropdown() {
+      const weekSelect = document.getElementById('weekSelect');
+      const weeks = [...new Set(allSermons.map(s => s.year_week).filter(Boolean))].sort().reverse();
+
+      weekSelect.innerHTML = `<option value="ALL">전체 주차 보기 (${allSermons.length}건)</option>`;
+      weeks.forEach(w => {
+        const count = allSermons.filter(s => s.year_week === w).length;
+        const option = document.createElement('option');
+        option.value = w;
+        option.textContent = `${w} 주차 (${count}건)`;
+        weekSelect.appendChild(option);
+      });
+    }
+
+    /**
+     * 필터/검색 제어 함수들
      */
     function setFilterType(type, buttonEl) {
       currentFilterType = type;
-      
-      // 탭 활성화 UI
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       buttonEl.classList.add('active');
-
+      visibleCount = ITEMS_PER_PAGE;
       applyFilters();
     }
 
-    /**
-     * 검색 입력 핸들러
-     */
+    function handleWeekFilter() {
+      currentWeekFilter = document.getElementById('weekSelect').value;
+      visibleCount = ITEMS_PER_PAGE;
+      applyFilters();
+    }
+
     function handleSearch() {
       currentKeyword = document.getElementById('searchInput').value.trim().toLowerCase();
+      visibleCount = ITEMS_PER_PAGE;
       applyFilters();
     }
 
-    /**
-     * 필터 & 검색 적용 (핵심: I열 ~ L열 대상 검색)
-     */
     function applyFilters() {
       filteredSermons = allSermons.filter(item => {
-        // 1. 예배 유형(주일설교 / 수요예배) 필터링
-        if (currentFilterType !== 'ALL' && item.type !== currentFilterType) {
-          return false;
-        }
+        if (currentFilterType !== 'ALL' && item.type !== currentFilterType) return false;
+        if (currentWeekFilter !== 'ALL' && item.year_week !== currentWeekFilter) return false;
 
-        // 2. 검색어가 있을 경우: I열(요약), J열(본문HTML), K열(주석), L열(묵상질문) 대상 단어 검색
         if (currentKeyword) {
           const searchableText = [
-            item.summary_core,       // I열
-            item.content_html,       // J열
-            item.exegesis,           // K열
-            item.reflection_points   // L열
+            item.summary_core,
+            item.content_html,
+            item.exegesis,
+            item.reflection_points
           ].join(' ').toLowerCase();
 
-          if (!searchableText.includes(currentKeyword)) {
-            return false;
-          }
+          if (!searchableText.includes(currentKeyword)) return false;
         }
 
         return true;
@@ -561,19 +637,20 @@
       renderList();
     }
 
-    /**
-     * 좌측 설교 목록 렌더링
-     */
     function renderList() {
       const listEl = document.getElementById('sermonList');
+      const btnMore = document.getElementById('btnLoadMore');
       listEl.innerHTML = '';
 
       if (filteredSermons.length === 0) {
-        listEl.innerHTML = `<li class="state-message">일치하는 설교 내용이 없습니다.</li>`;
+        listEl.innerHTML = `<li class="state-message">일치하는 설교가 없습니다.</li>`;
+        btnMore.style.display = 'none';
         return;
       }
 
-      filteredSermons.forEach(item => {
+      const displayItems = filteredSermons.slice(0, visibleCount);
+
+      displayItems.forEach(item => {
         const li = document.createElement('li');
         li.className = `sermon-item ${item.id === selectedId ? 'active' : ''}`;
         li.onclick = () => selectSermon(item.id);
@@ -591,42 +668,66 @@
         `;
         listEl.appendChild(li);
       });
+
+      if (filteredSermons.length > visibleCount) {
+        btnMore.style.display = 'block';
+        btnMore.textContent = `목록 더보기 (${visibleCount}/${filteredSermons.length})`;
+      } else {
+        btnMore.style.display = 'none';
+      }
+    }
+
+    function loadMoreItems() {
+      visibleCount += ITEMS_PER_PAGE;
+      renderList();
     }
 
     /**
-     * 우측 상세 뷰어에 설교 내용 표시
+     * 우측 상세 영역 렌더링 (유튜브 임베드 Iframe 탑재)
      */
     function selectSermon(id) {
       selectedId = id;
-      renderList(); // 활성 상태 클래스 업데이트
+      renderList();
 
       const sermon = allSermons.find(s => s.id === id);
       if (!sermon) return;
 
       const detailEl = document.getElementById('detailCard');
 
-      // 팟캐스트 오디오 다운로드 링크 생성
-      const directDownloadUrl = sermon.audio_url ? convertToDirectDownloadUrl(sermon.audio_url) : null;
-      const downloadButtonHtml = directDownloadUrl ? `
-        <div class="podcast-download-card">
-          <div class="podcast-left">
-            <span class="icon">🎙️</span>
-            <div>
-              <h4>설교 팟캐스트 오디오</h4>
-              <p>기기에 음원을 다운로드하여 원하는 플레이어로 편리하게 청취하세요.</p>
+      // 유튜브 영상 또는 미디어 영역 빌드
+      let mediaHtml = '';
+      const videoId = extractYouTubeVideoId(sermon.youtube_url);
+
+      if (videoId) {
+        // 1. 유튜브 영상인 경우: 16:9 반응형 Iframe 플레이어 삽입
+        mediaHtml = `
+          <div class="media-player-wrapper">
+            <div class="video-responsive">
+              <iframe 
+                src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1" 
+                title="${sermon.title}" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                allowfullscreen>
+              </iframe>
             </div>
           </div>
-          <a href="${directDownloadUrl}" 
-             download="${sermon.title}.m4a" 
-             target="_blank" 
-             rel="noopener noreferrer" 
-             class="btn-download">
-            <span>📥</span> 음원 다운로드
-          </a>
-        </div>
-      ` : '';
+        `;
+      } else if (sermon.youtube_url && sermon.youtube_url.includes('drive.google.com')) {
+        // 2. 구글 드라이브 음원 링크인 경우: 오디오 안내 배너로 처리
+        mediaHtml = `
+          <div class="audio-notice-card">
+            <div>
+              <h4 style="font-size:0.95rem; font-weight:700; color:#1e293b; margin-bottom:2px;">🎙️ 녹음 오디오 링크</h4>
+              <p style="font-size:0.8rem; color:#64748b;">구글 드라이브에 저장된 설교 음원입니다.</p>
+            </div>
+            <a href="${sermon.youtube_url}" target="_blank" rel="noopener noreferrer" class="btn-audio-link">
+              듣기 / 다운로드
+            </a>
+          </div>
+        `;
+      }
 
-      // 묵상 질문 (L열) 목록 생성
+      // 묵상 질문 (L열)
       let reflectionHtml = '';
       if (sermon.reflection_points) {
         const points = sermon.reflection_points.split('\n').filter(p => p.trim());
@@ -640,7 +741,7 @@
         `;
       }
 
-      // 상세 영역 조합
+      // 화면 업데이트
       detailEl.innerHTML = `
         <header class="detail-header">
           <h1 class="detail-title">${sermon.title}</h1>
@@ -649,10 +750,11 @@
             <span>🏷️ ${sermon.type}</span>
             <span>👤 ${sermon.preacher}</span>
             <span>📜 ${sermon.bible_ref}</span>
+            <span>🗓️ ${sermon.year_week}</span>
           </div>
         </header>
 
-        ${downloadButtonHtml}
+        ${mediaHtml}
 
         <div class="detail-body">
           ${sermon.content_html}
@@ -662,8 +764,7 @@
       `;
     }
 
-    // 초기 실행
-    window.addEventListener('DOMContentLoaded', fetchSermonsFromSheet);
+    window.addEventListener('DOMContentLoaded', fetchSermonDatabase);
   </script>
 </body>
 </html>
