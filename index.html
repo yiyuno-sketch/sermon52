@@ -9,6 +9,9 @@
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
+  <!-- 카카오 공식 SDK (키 입력 시 자동 연동) -->
+  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
+
   <style>
     :root {
       --bg-page: #f8fafc;
@@ -39,7 +42,7 @@
       word-break: keep-all;
     }
 
-    /* 상단 네비게이션 헤더 */
+    /* 상단 헤더 */
     .app-header {
       background-color: #ffffff;
       border-bottom: 1px solid var(--border-color);
@@ -93,7 +96,7 @@
       }
     }
 
-    /* 좌측 탐색 사이드바 */
+    /* 좌측 사이드바 */
     .sidebar {
       background-color: var(--bg-card);
       border-radius: 14px;
@@ -114,7 +117,7 @@
       }
     }
 
-    /* 탭 필터 (전체 / 주일설교 / 수요예배) */
+    /* 탭 필터 */
     .filter-tabs {
       display: flex;
       background-color: #f1f5f9;
@@ -143,7 +146,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
-    /* 검색창 & 주차별 필터 박스 */
+    /* 검색 및 주차별 드롭다운 */
     .filter-controls {
       display: flex;
       flex-direction: column;
@@ -325,7 +328,7 @@
       margin-bottom: 14px;
     }
 
-    /* 본문 상단 공유 액션 바 */
+    /* 공유 액션 바 */
     .share-action-bar {
       display: flex;
       align-items: center;
@@ -385,7 +388,7 @@
       color: var(--kakao-text);
     }
 
-    /* 16:9 반응형 유튜브 비디오 임베드 */
+    /* 16:9 반응형 유튜브 Iframe 플레이어 */
     .media-player-wrapper {
       margin: 20px 0 26px;
       border-radius: 12px;
@@ -436,12 +439,10 @@
       white-space: nowrap;
     }
 
-    /* 본문 영역 */
     .detail-body {
       margin-top: 16px;
     }
 
-    /* 묵상 카드 */
     .reflection-card {
       margin-top: 32px;
       padding: 20px;
@@ -511,7 +512,7 @@
       right: 24px;
       background-color: #1e293b;
       color: #ffffff;
-      padding: 10px 18px;
+      padding: 12px 20px;
       border-radius: 8px;
       font-size: 0.88rem;
       font-weight: 500;
@@ -521,6 +522,8 @@
       transform: translateY(10px);
       transition: all 0.25s ease-out;
       pointer-events: none;
+      max-width: 340px;
+      text-align: center;
     }
 
     .toast-message.show {
@@ -549,14 +552,12 @@
 
     <!-- 좌측 사이드바: 검색, 필터, 리스트 -->
     <aside class="sidebar">
-      <!-- 1. 예배 유형 필터 탭 -->
       <div class="filter-tabs">
         <button class="tab-btn active" data-type="ALL" onclick="setFilterType('ALL', this)">전체</button>
         <button class="tab-btn" data-type="주일설교" onclick="setFilterType('주일설교', this)">주일설교</button>
         <button class="tab-btn" data-type="수요예배" onclick="setFilterType('수요예배', this)">수요예배</button>
       </div>
 
-      <!-- 2. 검색창 & 주차별(Year-Week) 필터 -->
       <div class="filter-controls">
         <div class="search-box">
           <span class="icon">🔍</span>
@@ -572,7 +573,6 @@
         * 핵심요약(I), 본문(J), 주석(K), 묵상(L) 대상 통합 검색
       </div>
 
-      <!-- 3. 설교 리스트 및 페이징 더보기 -->
       <ul class="sermon-list" id="sermonList">
         <li class="state-message">설교 데이터를 불러오는 중...</li>
       </ul>
@@ -593,10 +593,23 @@
     🔗
   </button>
 
-  <!-- 토스트 알림창 -->
-  <div id="toastMessage" class="toast-message">링크가 클립보드에 복사되었습니다!</div>
+  <!-- 알림 토스트 -->
+  <div id="toastMessage" class="toast-message">링크가 복사되었습니다.</div>
 
   <script>
+    /**
+     * =========================================================================
+     * [설정 영역]
+     * 카카오 개발자 센터(developers.kakao.com)에서 발급받은 JavaScript 키가 있다면
+     * 아래 따옴표 안에 입력해 주세요. 키가 없어도 자동으로 모바일/클립보드 공유로 안전하게 동작합니다.
+     * =========================================================================
+     */
+    const KAKAO_JAVASCRIPT_KEY = ""; // 예: "a1b2c3d4e5f6g7h8..."
+
+    if (KAKAO_JAVASCRIPT_KEY && window.Kakao && !window.Kakao.isInitialized()) {
+      window.Kakao.init(KAKAO_JAVASCRIPT_KEY);
+    }
+
     /**
      * =========================================================================
      * [구글 스프레드시트 열(Column) 매핑 주석]
@@ -634,9 +647,6 @@
     const ITEMS_PER_PAGE = 10;
     let visibleCount = ITEMS_PER_PAGE;
 
-    /**
-     * 유튜브 URL에서 11자리 비디오 ID 추출
-     */
     function extractYouTubeVideoId(url) {
       if (!url) return null;
       const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/;
@@ -644,9 +654,6 @@
       return match ? match[1] : null;
     }
 
-    /**
-     * 스프레드시트 데이터 비동기 로드
-     */
     async function fetchSermonDatabase() {
       const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
       
@@ -682,7 +689,6 @@
         initWeekDropdown();
         applyFilters();
 
-        // URL 파라미터(?id=...)가 있는 경우 해당 설교 우선 선택
         const urlParams = new URLSearchParams(window.location.search);
         const paramId = urlParams.get('id');
         const target = allSermons.find(s => s.id === paramId);
@@ -701,9 +707,6 @@
       }
     }
 
-    /**
-     * 주차별(B열) 셀렉트박스 생성
-     */
     function initWeekDropdown() {
       const weekSelect = document.getElementById('weekSelect');
       const weeks = [...new Set(allSermons.map(s => s.year_week).filter(Boolean))].sort().reverse();
@@ -805,9 +808,6 @@
       renderList();
     }
 
-    /**
-     * 설교 상세 보기 및 상단 공유 바 렌더링
-     */
     function selectSermon(id) {
       selectedId = id;
       renderList();
@@ -815,14 +815,12 @@
       const sermon = allSermons.find(s => s.id === id);
       if (!sermon) return;
 
-      // 주소창 URL 업데이트 (새로고침 없이 ?id= 반영)
       const newUrl = new URL(window.location);
       newUrl.searchParams.set('id', sermon.id);
       window.history.replaceState({}, '', newUrl);
 
       const detailEl = document.getElementById('detailCard');
 
-      // 유튜브 영상 임베드
       let mediaHtml = '';
       const videoId = extractYouTubeVideoId(sermon.youtube_url);
 
@@ -853,7 +851,6 @@
         `;
       }
 
-      // 묵상 질문 (L열)
       let reflectionHtml = '';
       if (sermon.reflection_points) {
         const points = sermon.reflection_points.split('\n').filter(p => p.trim());
@@ -867,7 +864,6 @@
         `;
       }
 
-      // 상세 영역 조합 (상단 공유 액션바 포함)
       detailEl.innerHTML = `
         <header class="detail-header">
           <h1 class="detail-title">${sermon.title}</h1>
@@ -879,7 +875,7 @@
             <span>🗓️ ${sermon.year_week}</span>
           </div>
 
-          <!-- 상단 공유 액션 바 -->
+          <!-- 본문 상단 공유 액션 바 -->
           <div class="share-action-bar">
             <div class="share-label">
               <span>📤</span> <span>말씀 요약 공유하기</span>
@@ -910,45 +906,99 @@
 
     /**
      * =========================================================================
-     * [공유 기능 로직: 링크 복사, 카카오톡, Web Share API, 토스트 알림]
+     * [개선된 공유 기능 로직: 4011 에러 방지 및 완벽 호환]
      * =========================================================================
      */
 
-    // 토스트 팝업 띄우기
-    function showToast(message) {
+    function showToast(msg) {
       const toast = document.getElementById('toastMessage');
-      toast.textContent = message;
+      toast.textContent = msg;
       toast.classList.add('show');
       setTimeout(() => {
         toast.classList.remove('show');
-      }, 2500);
+      }, 3000);
     }
 
-    // 현재 설교의 고유 공유 링크 얻기
     function getShareData() {
       const sermon = allSermons.find(s => s.id === selectedId);
       const title = sermon ? `[설교 요약] ${sermon.title}` : document.title;
-      const text = sermon ? `${sermon.bible_ref} (${sermon.preacher})\n은혜로운 말씀 요약을 확인해 보세요.` : '';
+      const text = sermon ? `${sermon.date} (${sermon.type})\n${sermon.bible_ref} - ${sermon.preacher}\n은혜로운 설교 요약을 나눕니다.` : '';
       const url = window.location.href;
 
       return { title, text, url };
     }
 
-    // 1. 현재 링크 클립보드 복사
-    function copyCurrentUrl() {
+    // 1. 카카오톡 공유 (앱키 유무 및 기기 환경에 맞춰 지능형 동작)
+    function shareToKakao() {
+      const data = getShareData();
+
+      // CASE A: 카카오 앱 키가 등록되어 있고 SDK가 초기화된 경우
+      if (window.Kakao && window.Kakao.isInitialized()) {
+        try {
+          window.Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+              title: data.title,
+              description: data.text,
+              imageUrl: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=800&auto=format&fit=crop',
+              link: {
+                mobileWebUrl: data.url,
+                webUrl: data.url,
+              },
+            },
+            buttons: [
+              {
+                title: '설교 요약 보기',
+                link: {
+                  mobileWebUrl: data.url,
+                  webUrl: data.url,
+                },
+              },
+            ],
+          });
+          return;
+        } catch (e) {
+          console.warn('Kakao SDK share failed, using fallback:', e);
+        }
+      }
+
+      // CASE B: 모바일 스마트폰 기기인 경우 카카오톡 앱 직접 호출
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile) {
+        // 모바일 Web Share API가 지원되면 바로 호출 (카카오톡 선택 가능)
+        if (navigator.share) {
+          navigator.share({
+            title: data.title,
+            text: `${data.title}\n${data.text}`,
+            url: data.url
+          }).catch(err => {
+            if (err.name !== 'AbortError') copyCurrentUrl();
+          });
+          return;
+        }
+      }
+
+      // CASE C: PC 브라우저 또는 앱 키 미등록 환경 (링크 복사 후 알림)
+      copyCurrentUrl("🔗 링크가 복사되었습니다!\n카카오톡 채팅방에 [붙여넣기(Ctrl+V)] 하세요.");
+    }
+
+    // 2. 링크 복사 함수
+    function copyCurrentUrl(customMsg) {
       const { url } = getShareData();
+      const message = customMsg || '🔗 설교 링크가 클립보드에 복사되었습니다!';
+
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(url).then(() => {
-          showToast('🔗 설교 링크가 복사되었습니다!');
+          showToast(message);
         }).catch(() => {
-          fallbackCopyText(url);
+          fallbackCopyText(url, message);
         });
       } else {
-        fallbackCopyText(url);
+        fallbackCopyText(url, message);
       }
     }
 
-    function fallbackCopyText(text) {
+    function fallbackCopyText(text, message) {
       const textarea = document.createElement('textarea');
       textarea.value = text;
       textarea.style.position = 'fixed';
@@ -957,31 +1007,22 @@
       textarea.select();
       try {
         document.execCommand('copy');
-        showToast('🔗 설교 링크가 복사되었습니다!');
+        showToast(message);
       } catch (err) {
         showToast('링크 복사에 실패했습니다.');
       }
       document.body.removeChild(textarea);
     }
 
-    // 2. 카카오톡 공유 (웹 인텐트 방식)
-    function shareToKakao() {
-      const { title, url } = getShareData();
-      const sendText = `${title}\n${url}`;
-      // 모바일 카카오톡 앱 또는 PC 웹 카카오 공유 주소 호출
-      const kakaoUrl = `https://sharer.kakao.com/talk/friends/picker/link?url=${encodeURIComponent(url)}&text=${encodeURIComponent(sendText)}`;
-      window.open(kakaoUrl, '_blank', 'width=500,height=600');
-    }
-
-    // 3. 스마트 공유 (모바일 Web Share API 지원 시 기본 공유창 호출, 미지원 시 링크 복사)
+    // 3. 스마트폰 통합 공유 (Web Share API / 플로팅 버튼 연동)
     function triggerSmartShare() {
-      const { title, text, url } = getShareData();
+      const data = getShareData();
 
       if (navigator.share) {
         navigator.share({
-          title: title,
-          text: text,
-          url: url
+          title: data.title,
+          text: `${data.title}\n${data.text}`,
+          url: data.url
         }).catch((err) => {
           if (err.name !== 'AbortError') {
             copyCurrentUrl();
@@ -992,7 +1033,6 @@
       }
     }
 
-    // 초기 실행
     window.addEventListener('DOMContentLoaded', fetchSermonDatabase);
   </script>
 </body>
