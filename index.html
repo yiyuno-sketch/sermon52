@@ -9,9 +9,6 @@
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-  <!-- 카카오 공식 SDK (키 입력 시 자동 연동) -->
-  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
-
   <style>
     :root {
       --bg-page: #f8fafc;
@@ -23,8 +20,6 @@
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
       --primary-light: #eff6ff;
-      --kakao-yellow: #fee500;
-      --kakao-text: #191919;
       --youtube-red: #ef4444;
     }
 
@@ -79,7 +74,7 @@
       gap: 5px;
     }
 
-    /* 메인 2열 레이아웃 */
+    /* 레이아웃 */
     .app-container {
       max-width: 1240px;
       margin: 24px auto 80px;
@@ -117,7 +112,7 @@
       }
     }
 
-    /* 탭 필터 */
+    /* 탭 필터 (전체 / 주일설교 / 수요예배) */
     .filter-tabs {
       display: flex;
       background-color: #f1f5f9;
@@ -146,7 +141,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
-    /* 검색 및 주차별 드롭다운 */
+    /* 검색창 & 주차별 필터 박스 */
     .filter-controls {
       display: flex;
       flex-direction: column;
@@ -328,7 +323,7 @@
       margin-bottom: 14px;
     }
 
-    /* 공유 액션 바 */
+    /* 상단 공유 바 */
     .share-action-bar {
       display: flex;
       align-items: center;
@@ -360,9 +355,9 @@
     .btn-share {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 6px 12px;
-      font-size: 0.8rem;
+      gap: 6px;
+      padding: 7px 14px;
+      font-size: 0.82rem;
       font-weight: 600;
       border-radius: 6px;
       border: 1px solid var(--border-color);
@@ -377,15 +372,15 @@
       color: var(--text-main);
     }
 
-    .btn-share-kakao {
-      background-color: var(--kakao-yellow);
-      border-color: #ecd200;
-      color: var(--kakao-text);
+    .btn-share-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff !important;
     }
 
-    .btn-share-kakao:hover {
-      background-color: #ebd100;
-      color: var(--kakao-text);
+    .btn-share-primary:hover {
+      background-color: var(--primary-hover);
+      border-color: var(--primary-hover);
     }
 
     /* 16:9 반응형 유튜브 Iframe 플레이어 */
@@ -534,7 +529,7 @@
 </head>
 <body>
 
-  <!-- 상단 네비게이션 헤더 -->
+  <!-- 상단 헤더 -->
   <header class="app-header">
     <div class="header-inner">
       <div class="brand">
@@ -597,19 +592,6 @@
   <div id="toastMessage" class="toast-message">링크가 복사되었습니다.</div>
 
   <script>
-    /**
-     * =========================================================================
-     * [설정 영역]
-     * 카카오 개발자 센터(developers.kakao.com)에서 발급받은 JavaScript 키가 있다면
-     * 아래 따옴표 안에 입력해 주세요. 키가 없어도 자동으로 모바일/클립보드 공유로 안전하게 동작합니다.
-     * =========================================================================
-     */
-    const KAKAO_JAVASCRIPT_KEY = ""; // 예: "a1b2c3d4e5f6g7h8..."
-
-    if (KAKAO_JAVASCRIPT_KEY && window.Kakao && !window.Kakao.isInitialized()) {
-      window.Kakao.init(KAKAO_JAVASCRIPT_KEY);
-    }
-
     /**
      * =========================================================================
      * [구글 스프레드시트 열(Column) 매핑 주석]
@@ -864,6 +846,7 @@
         `;
       }
 
+      // 상단 공유 액션 바 (카카오톡 제거, 링크 복사 및 스마트폰 공유 유지)
       detailEl.innerHTML = `
         <header class="detail-header">
           <h1 class="detail-title">${sermon.title}</h1>
@@ -875,19 +858,16 @@
             <span>🗓️ ${sermon.year_week}</span>
           </div>
 
-          <!-- 본문 상단 공유 액션 바 -->
+          <!-- 상단 공유 액션 바 -->
           <div class="share-action-bar">
             <div class="share-label">
               <span>📤</span> <span>말씀 요약 공유하기</span>
             </div>
             <div class="share-btn-group">
-              <button class="btn-share btn-share-kakao" onclick="shareToKakao()">
-                💬 카카오톡
-              </button>
               <button class="btn-share" onclick="copyCurrentUrl()">
                 🔗 링크 복사
               </button>
-              <button class="btn-share" onclick="triggerSmartShare()">
+              <button class="btn-share btn-share-primary" onclick="triggerSmartShare()">
                 📱 스마트폰 공유
               </button>
             </div>
@@ -905,18 +885,15 @@
     }
 
     /**
-     * =========================================================================
-     * [개선된 공유 기능 로직: 4011 에러 방지 및 완벽 호환]
-     * =========================================================================
+     * 공유 및 알림 토스트 로직
      */
-
     function showToast(msg) {
       const toast = document.getElementById('toastMessage');
       toast.textContent = msg;
       toast.classList.add('show');
       setTimeout(() => {
         toast.classList.remove('show');
-      }, 3000);
+      }, 2500);
     }
 
     function getShareData() {
@@ -928,61 +905,7 @@
       return { title, text, url };
     }
 
-    // 1. 카카오톡 공유 (앱키 유무 및 기기 환경에 맞춰 지능형 동작)
-    function shareToKakao() {
-      const data = getShareData();
-
-      // CASE A: 카카오 앱 키가 등록되어 있고 SDK가 초기화된 경우
-      if (window.Kakao && window.Kakao.isInitialized()) {
-        try {
-          window.Kakao.Share.sendDefault({
-            objectType: 'feed',
-            content: {
-              title: data.title,
-              description: data.text,
-              imageUrl: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=800&auto=format&fit=crop',
-              link: {
-                mobileWebUrl: data.url,
-                webUrl: data.url,
-              },
-            },
-            buttons: [
-              {
-                title: '설교 요약 보기',
-                link: {
-                  mobileWebUrl: data.url,
-                  webUrl: data.url,
-                },
-              },
-            ],
-          });
-          return;
-        } catch (e) {
-          console.warn('Kakao SDK share failed, using fallback:', e);
-        }
-      }
-
-      // CASE B: 모바일 스마트폰 기기인 경우 카카오톡 앱 직접 호출
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      if (isMobile) {
-        // 모바일 Web Share API가 지원되면 바로 호출 (카카오톡 선택 가능)
-        if (navigator.share) {
-          navigator.share({
-            title: data.title,
-            text: `${data.title}\n${data.text}`,
-            url: data.url
-          }).catch(err => {
-            if (err.name !== 'AbortError') copyCurrentUrl();
-          });
-          return;
-        }
-      }
-
-      // CASE C: PC 브라우저 또는 앱 키 미등록 환경 (링크 복사 후 알림)
-      copyCurrentUrl("🔗 링크가 복사되었습니다!\n카카오톡 채팅방에 [붙여넣기(Ctrl+V)] 하세요.");
-    }
-
-    // 2. 링크 복사 함수
+    // 1. 링크 복사
     function copyCurrentUrl(customMsg) {
       const { url } = getShareData();
       const message = customMsg || '🔗 설교 링크가 클립보드에 복사되었습니다!';
@@ -1014,7 +937,7 @@
       document.body.removeChild(textarea);
     }
 
-    // 3. 스마트폰 통합 공유 (Web Share API / 플로팅 버튼 연동)
+    // 2. 스마트폰 네이티브 공유창 호출 (카카오톡, 문자, 이메일 등 자동 연동)
     function triggerSmartShare() {
       const data = getShareData();
 
@@ -1029,7 +952,8 @@
           }
         });
       } else {
-        copyCurrentUrl();
+        // PC 브라우저 등 미지원 환경에서는 링크 복사로 매끄럽게 연결
+        copyCurrentUrl('🔗 링크가 복사되었습니다! 원하는 곳에 붙여넣기 하세요.');
       }
     }
 
