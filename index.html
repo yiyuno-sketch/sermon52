@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>설교요약 아카이브</title>
+  <title>말씀과 은혜 - 설교 요약 아카이브</title>
 
   <!-- Google Fonts & Pretendard CDN -->
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
@@ -74,7 +74,7 @@
       gap: 5px;
     }
 
-    /* 레이아웃 */
+    /* 레이아웃 (PC 기본: 2열 나란히 유지) */
     .app-container {
       max-width: 1240px;
       margin: 24px auto 80px;
@@ -83,12 +83,6 @@
       grid-template-columns: 370px 1fr;
       gap: 24px;
       align-items: start;
-    }
-
-    @media (max-width: 960px) {
-      .app-container {
-        grid-template-columns: 1fr;
-      }
     }
 
     /* 좌측 사이드바 */
@@ -103,13 +97,6 @@
       display: flex;
       flex-direction: column;
       box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    }
-
-    @media (max-width: 960px) {
-      .sidebar {
-        position: static;
-        max-height: none;
-      }
     }
 
     /* 탭 필터 (전체 / 주일설교 / 수요예배) */
@@ -294,16 +281,32 @@
       position: relative;
     }
 
-    @media (max-width: 640px) {
-      .detail-card {
-        padding: 20px;
-      }
-    }
-
     .detail-header {
       margin-bottom: 16px;
       padding-bottom: 16px;
       border-bottom: 1px solid var(--border-color);
+    }
+
+    /* 모바일 전용 뒤로가기 버튼 (PC에서는 항상 숨김) */
+    .btn-back-to-list {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      margin-bottom: 16px;
+      background-color: #f1f5f9;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      width: fit-content;
+    }
+
+    .btn-back-to-list:hover {
+      background-color: #e2e8f0;
     }
 
     .detail-title {
@@ -470,7 +473,7 @@
       font-size: 0.95rem;
     }
 
-    /* 우측 하단 모바일 플로팅 공유 버튼 (FAB) */
+    /* 플로팅 공유 버튼 */
     .floating-share-btn {
       position: fixed;
       bottom: 24px;
@@ -525,6 +528,52 @@
       opacity: 1;
       transform: translateY(0);
     }
+
+    /* =========================================================
+       [선택 3번 적용] 모바일 화면 전환 (View Switching) 반응형 미디어 쿼리
+       - PC(961px 이상): 양쪽(사이드바와 본문) 모두 정상 표시
+       - 모바일(960px 이하): 
+           * 목록 뷰(기본): 사이드바 표시, 본문 숨김
+           * 상세 뷰(.view-detail 활성화 시): 본문 표시, 사이드바 숨김, 뒤로가기 버튼 활성화
+       ========================================================= */
+    @media (max-width: 960px) {
+      .app-container {
+        grid-template-columns: 1fr;
+        margin: 16px auto 60px;
+      }
+
+      .sidebar {
+        position: static;
+        max-height: none;
+      }
+
+      .detail-card {
+        padding: 20px;
+      }
+
+      /* 모바일 기본 상태: 사이드바만 보이고 본문 카드는 숨김 */
+      body:not(.view-detail) .detail-card {
+        display: none !important;
+      }
+
+      body:not(.view-detail) .sidebar {
+        display: flex !important;
+      }
+
+      /* 설교 선택 후 상세 뷰: 본문 카드만 보이고 사이드바 숨김 */
+      body.view-detail .sidebar {
+        display: none !important;
+      }
+
+      body.view-detail .detail-card {
+        display: block !important;
+      }
+
+      /* 모바일 상세 뷰에서 뒤로가기 버튼 노출 */
+      body.view-detail .btn-back-to-list {
+        display: inline-flex !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -546,7 +595,7 @@
   <div class="app-container">
 
     <!-- 좌측 사이드바: 검색, 필터, 리스트 -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <div class="filter-tabs">
         <button class="tab-btn active" data-type="ALL" onclick="setFilterType('ALL', this)">전체</button>
         <button class="tab-btn" data-type="주일설교" onclick="setFilterType('주일설교', this)">주일설교</button>
@@ -583,7 +632,7 @@
 
   </div>
 
-  <!-- 우측 하단 플로팅 공유 버튼 (모바일 핸드폰 대응) -->
+  <!-- 우측 하단 플로팅 공유 버튼 -->
   <button class="floating-share-btn" id="fabShareBtn" title="현재 설교 공유하기" onclick="triggerSmartShare()">
     🔗
   </button>
@@ -606,7 +655,7 @@
     let visibleCount = ITEMS_PER_PAGE;
 
     /**
-     * 구글 시트 Date(...) 문자열 및 날짜 객체를 YYYY. MM. DD 형식으로 변환
+     * Date(...) 문자열 및 날짜 객체를 YYYY. MM. DD 형식으로 변환
      */
     function formatSermonDate(rawVal) {
       if (!rawVal) return '';
@@ -642,7 +691,7 @@
     }
 
     /**
-     * 정렬 비교를 위한 날짜 타임스탬프 파싱
+     * 정렬 비교를 위한 타임스탬프 파싱
      */
     function parseTimestamp(rawVal) {
       if (!rawVal) return 0;
@@ -708,7 +757,7 @@
           };
         }).filter(item => item.title);
 
-        // 최신 날짜순(내림차순) 정렬
+        // 최신 날짜순 정렬
         allSermons.sort((a, b) => b.timestamp - a.timestamp);
 
         initWeekDropdown();
@@ -719,9 +768,12 @@
         const target = allSermons.find(s => s.id === paramId);
 
         if (target) {
-          selectSermon(target.id);
+          // 공유 링크로 진입했을 때는 모바일에서도 바로 상세 내용을 표시
+          selectSermon(target.id, true);
         } else if (filteredSermons.length > 0) {
-          selectSermon(filteredSermons[0].id);
+          // 일반 접속 시: PC는 첫 번째 설교 바로 선택 표시, 모바일은 목록 먼저 유지
+          const isMobile = window.innerWidth <= 960;
+          selectSermon(filteredSermons[0].id, !isMobile);
         }
       } catch (err) {
         console.error('시트 연동 실패:', err);
@@ -805,7 +857,7 @@
       displayItems.forEach(item => {
         const li = document.createElement('li');
         li.className = `sermon-item ${item.id === selectedId ? 'active' : ''}`;
-        li.onclick = () => selectSermon(item.id);
+        li.onclick = () => selectSermon(item.id, true);
 
         const isSunday = item.type === '주일설교';
         const tagClass = isSunday ? 'tag-sunday' : 'tag-wednesday';
@@ -834,7 +886,10 @@
       renderList();
     }
 
-    function selectSermon(id) {
+    /**
+     * 설교 선택 함수 (triggerViewChange: 모바일에서 화면을 상세 뷰로 전환할지 여부)
+     */
+    function selectSermon(id, triggerViewChange = true) {
       selectedId = id;
       renderList();
 
@@ -844,6 +899,14 @@
       const newUrl = new URL(window.location);
       newUrl.searchParams.set('id', sermon.id);
       window.history.replaceState({}, '', newUrl);
+
+      // 모바일 환경에서 사용자가 목록을 클릭했을 때 화면을 상세 화면으로 전환하고 상단으로 이동
+      if (triggerViewChange) {
+        document.body.classList.add('view-detail');
+        if (window.innerWidth <= 960) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
 
       const detailEl = document.getElementById('detailCard');
 
@@ -892,6 +955,11 @@
 
       detailEl.innerHTML = `
         <header class="detail-header">
+          <!-- 모바일 전용 뒤로가기 버튼 -->
+          <button class="btn-back-to-list" onclick="backToList()">
+            ← 설교 목록으로 돌아가기
+          </button>
+
           <h1 class="detail-title">${sermon.title}</h1>
           <div class="detail-meta">
             <span>📅 ${sermon.date}</span>
@@ -925,6 +993,14 @@
 
         ${reflectionHtml}
       `;
+    }
+
+    /**
+     * 모바일 상세 뷰에서 다시 목록 화면으로 복귀
+     */
+    function backToList() {
+      document.body.classList.remove('view-detail');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function showToast(msg) {
