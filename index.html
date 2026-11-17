@@ -720,7 +720,7 @@
       return match ? match[1] : null;
     }
 
-    async function fetchSermonDatabase() {
+/**    async function fetchSermonDatabase() {
       const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
       
       try {
@@ -783,7 +783,89 @@
           </li>`;
       }
     }
+*/
+/* ======= 최신데이터 먼저 로딩 설정 yi261117 ================= */
+async function fetchSermonDatabase() {
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+      
+      try {
+        const res = await fetch(url);
+        const text = await res.text();
+        
+        const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+        const data = JSON.parse(jsonString);
+        const rows = data.table.rows;
 
+        allSermons = rows.map((r, idx) => {
+          const c = r.c;
+          const getVal = (i) => (c && c[i] && c[i].v !== null && c[i].v !== undefined) ? String(c[i].v) : '';
+          const getFormattedVal = (i) => (c && c[i] && c[i].f) ? String(c[i].f) : getVal(i);
+
+          // [수정 1] Date(YYYY,M,D) 원본 값(getVal)을 우선 사용하여 날짜 파싱 실패 방지
+          const rawDate = getVal(3) || getFormattedVal(3);
+
+          return {
+            _rowIdx: idx, // 시트 하단 행일수록 큰 값 (최신 데이터)
+            id: getVal(0) || `sermon-${idx}`,
+            year_week: getVal(1).trim(),
+            type: getVal(2).trim(),
+            raw_date: rawDate,
+            date: formatSermonDate(rawDate),
+            timestamp: parseTimestamp(rawDate),
+            title: getVal(4),
+            preacher: getVal(5),
+            bible_ref: getVal(6),
+            youtube_url: getVal(7).trim(),
+            summary_core: getVal(8),
+            content_html: getVal(9),
+            exegesis: getVal(10),
+            reflection_points: getVal(11),
+            is_published: getVal(12)
+          };
+        }).filter(item => {
+          if (!item.title) return false;
+          // is_published 열(M열)이 비어있거나 TRUE인 항목만 노출
+          const pub = String(item.is_published).trim().toUpperCase();
+          return pub === '' || pub === 'TRUE';
+        });
+
+        // [수정 2] 최신 날짜순 정렬 + 같은 날짜(또는 날짜 미기재)일 경우 시트 아래쪽 행(최신) 우선
+        allSermons.sort((a, b) => {
+          if (b.timestamp !== a.timestamp) {
+            return b.timestamp - a.timestamp;
+          }
+          return b._rowIdx - a._rowIdx;
+        });
+
+        initWeekDropdown();
+        applyFilters();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramId = urlParams.get('id');
+        const target = allSermons.find(s => s.id === paramId);
+
+        if (target) {
+          // 공유 링크(?id=...)로 직접 진입했을 때만 상세 화면 바로 표시
+          selectSermon(target.id, true);
+        } else if (filteredSermons.length > 0) {
+          const isMobile = window.innerWidth <= 960;
+          if (!isMobile) {
+            // PC 접속 시에만 최신 설교(0번)를 자동 선택하고 URL 갱신
+            selectSermon(filteredSermons[0].id, false);
+          }
+          // [수정 3] 모바일 접속 시에는 selectSermon()을 호출하지 않아
+          // 주소창에 ?id= 가 붙지 않고, 왼쪽 목록 최상단(최신 설교)부터 깔끔하게 표시됨
+        }
+      } catch (err) {
+        console.error('시트 연동 실패:', err);
+        document.getElementById('sermonList').innerHTML = `
+          <li class="state-message" style="color: #dc2626;">
+            데이터를 불러올 수 없습니다.<br>스프레드시트의 공유 권한(링크가 있는 모든 사용자-뷰어)을 확인해 주세요.
+          </li>`;
+      }
+    }
+
+/**=======================================================================================================*/    
     function initWeekDropdown() {
       const weekSelect = document.getElementById('weekSelect');
       const weeks = [...new Set(allSermons.map(s => s.year_week).filter(Boolean))].sort().reverse();
